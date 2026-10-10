@@ -14,6 +14,8 @@ A party/streamer mod for <i>Scam With Your Friends</i>: random events, chat vote
   <a href="#troubleshooting">Troubleshooting</a>
 </p>
 
+### ▶ [Watch the trailer](https://bobby675-cpu.github.io/chaos-mode/#trailer)
+
 > Unofficial fan mod. Not affiliated with the game's developers. The game is in playtest, so updates can break mods.
 
 ---
