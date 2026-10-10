@@ -18,6 +18,14 @@ dotnet "$CSC" -nologo -target:library -nostdlib -noconfig -langversion:9 -optimi
 dotnet "$CSC" -nologo -target:library -nostdlib -noconfig -langversion:9 -optimize -nowarn:414,169 -out:"$OUT/Mods/ChaosMode.dll" \
   "${REFS[@]}" src/ChaosMode/*.cs src/Shared/ClickGui.cs
 
+# BepInEx build (same code, plus a BepInEx entry point). Set BEPINEX_CORE to <game>/BepInEx/core to build it.
+if [ -n "${BEPINEX_CORE:-}" ]; then
+  mkdir -p "$OUT/BepInEx/plugins/ChaosMode"
+  dotnet "$CSC" -nologo -target:library -nostdlib -noconfig -langversion:9 -optimize -nowarn:414,169 -define:BEPINEX \
+    -out:"$OUT/BepInEx/plugins/ChaosMode/ChaosMode.dll" "${REFS[@]}" -r:"$BEPINEX_CORE/BepInEx.dll" \
+    src/ChaosMode/*.cs src/Shared/ClickGui.cs
+fi
+
 # ChatBridge window (.NET Framework 4.x WinForms)
 mcs -target:winexe -sdk:4.5 -optimize -win32icon:src/ChatBridge/gui/icon.ico -r:System.Windows.Forms.dll -r:System.Drawing.dll \
   -r:System.Web.Extensions.dll -out:"$OUT/ChatBridge/ChatBridge.exe" src/ChatBridge/gui/ChatBridgeGui.cs
@@ -29,3 +37,4 @@ mcs -target:winexe -sdk:4.5 -optimize -win32icon:src/ChatBridge/gui/icon.ico -r:
   && cd dist && npx --yes @yao-pkg/pkg@6.23.0 . --targets node22-win-x64 --no-bytecode --public-packages "*" --public --output chatbridge-core.exe )
 cp src/ChatBridge/core/dist/chatbridge-core.exe "$OUT/ChatBridge/"
 echo "Built into $OUT/. Add UnityDoorstop 4.5.0 (winhttp.dll + doorstop_config.ini with target_assembly=ModLoader\\ModLoader.dll)."
+echo "BepInEx build (if BEPINEX_CORE was set): needs BepInEx 5.4.23.5 + the unstripped corlib from https://github.com/swyf-modding/Setup"
