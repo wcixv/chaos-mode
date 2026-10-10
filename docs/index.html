@@ -281,8 +281,8 @@
     <p class="sub">Windows, Steam version of the playtest. It runs on BepInEx, which needs a one-time setup.</p>
     <ol class="steps">
       <li>Set up BepInEx once with the community <a href="https://github.com/swyf-modding/Setup">Setup tool</a>. Download it, then run <code>setup.ps1</code> in PowerShell with your game folder. The <a href="https://github.com/wcixv/chaos-mode#install" id="readme-link">README</a> has the exact line.</li>
-      <li>Download <b>ChaosMode-v1.1.zip</b> from the <a href="https://github.com/wcixv/chaos-mode/releases/latest" id="dl-steps">latest release</a>.</li>
-      <li>In Steam, right-click the game and choose <b>Manage → Browse local files</b>, then copy the <code>BepInEx</code> and <code>ChatBridge</code> folders from the zip into it. Creator Mode stays locked until ChatBridge is installed.</li>
+      <li>Download <b>ChaosMode-v1.1.zip</b> and <b>ChatBridge-v1.1.zip</b> from the <a href="https://github.com/wcixv/chaos-mode/releases/latest" id="dl-steps">latest release</a>.</li>
+      <li>In Steam, right-click the game and choose <b>Manage → Browse local files</b>, then put <code>ChaosMode.dll</code> in the <code>BepInEx\plugins</code> folder and extract the ChatBridge zip into the game folder. Creator Mode stays locked until ChatBridge is installed.</li>
       <li>Host a <b>Friends Only</b> or <b>Invite Only</b> lobby and press <b>F2</b>. Chaos Mode is locked in public lobbies.</li>
     </ol>
   </section>
@@ -294,7 +294,7 @@
     <details><summary>Windows warns about ChatBridge</summary><p>It isn't code-signed. Click <b>More info</b>, then <b>Run anyway</b>.</p></details>
     <details><summary>TikTok won't connect</summary><p>Open TikFinity, log in, and turn on its Event API (port 21213). ChatBridge connects to it automatically.</p></details>
     <details><summary>I have v1.0 installed</summary><p>Delete <code>winhttp.dll</code>, <code>doorstop_config.ini</code>, the <code>ModLoader</code> folder and <code>Mods\ChaosMode.dll</code> from the game folder, then follow the install steps above. The Setup tool leaves old copies alone, and the old ones point at the v1.0 loader.</p></details>
-    <details><summary>How do I uninstall it?</summary><p>Delete <code>BepInEx\plugins\ChaosMode</code> from the game folder.</p></details>
+    <details><summary>How do I uninstall it?</summary><p>Delete <code>ChaosMode.dll</code> from <code>BepInEx\plugins</code>, and the <code>ChatBridge</code> folder if you want it gone too.</p></details>
   </section>
 
   <footer>

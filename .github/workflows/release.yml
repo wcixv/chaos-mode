@@ -18,9 +18,12 @@ jobs:
         run: |
           ZIP=$(ls release/ChaosMode-v*.zip | sort -V | tail -1)
           TAG=$(basename "$ZIP" .zip | sed 's/^ChaosMode-//')
+          # ChatBridge ships as its own zip next to the plugin zip (release/ChatBridge-vX.Y.zip), if present
+          ASSETS=("$ZIP")
+          if [ -f "release/ChatBridge-$TAG.zip" ]; then ASSETS+=("release/ChatBridge-$TAG.zip"); fi
           # recreate the release so its tag always points at the current commit
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release delete "$TAG" --cleanup-tag --yes
           fi
           git push origin ":refs/tags/$TAG" 2>/dev/null || true
-          gh release create "$TAG" "$ZIP" --target "$GITHUB_SHA" --title "Chaos Mode $TAG" --notes-file "release/notes-$TAG.md" --latest
+          gh release create "$TAG" "${ASSETS[@]}" --target "$GITHUB_SHA" --title "Chaos Mode $TAG" --notes-file "release/notes-$TAG.md" --latest

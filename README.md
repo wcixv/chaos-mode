@@ -43,14 +43,14 @@ powershell -ExecutionPolicy Bypass -File .\setup.ps1 -GameDir "C:\...\steamapps\
 
 **2. Install Chaos Mode**
 
-1. Download **`ChaosMode-v1.1.zip`** from [Releases](../../releases/latest).
+1. Download **`ChaosMode-v1.1.zip`** and **`ChatBridge-v1.1.zip`** from [Releases](../../releases/latest).
 2. In Steam: right-click the game → **Manage → Browse local files**.
-3. Copy the **`BepInEx`** folder from the zip into that folder. It merges with the one the Setup tool made. Also copy the **`ChatBridge`** folder: Creator Mode (chat votes) stays locked until it's installed.
+3. Put **`ChaosMode.dll`** (from `ChaosMode-v1.1.zip`) in the **`BepInEx\plugins`** folder. Extract **`ChatBridge-v1.1.zip`** into the game folder so you have `ChatBridge\ChatBridge.exe`. Creator Mode (chat votes) stays locked until ChatBridge is installed.
 4. Launch the game, host a **Friends Only** or **Invite Only** lobby and press **F2**.
 
 **Coming from v1.0?** Delete `winhttp.dll`, `doorstop_config.ini`, the `ModLoader` folder and `Mods\ChaosMode.dll` from the game folder before step 1. The Setup tool leaves existing copies alone, and the old ones point at the v1.0 loader.
 
-**Uninstall:** delete `BepInEx\plugins\ChaosMode` from the game folder.
+**Uninstall:** delete `ChaosMode.dll` from `BepInEx\plugins`, and the `ChatBridge` folder if you want it gone too.
 
 ## Events
 
@@ -96,7 +96,7 @@ In ChatBridge, click **Copy** next to *OBS overlay*. In OBS, add a **Browser** s
 | Windows warns about ChatBridge | *More info → Run anyway* (it isn't code-signed) |
 | TikTok won't connect | Open TikFinity, log in and enable its Event API (port 21213) |
 | Kick says "lookup blocked" | Put your `kickChatroomId` in `ChatBridge\chatbridge.json` |
-| Something broke after a game update | Run the Setup tool again, then check `BepInEx\LogOutput.log` and `BepInEx\plugins\ChaosMode\ChaosMode.log`. If it's still broken, open an issue |
+| Something broke after a game update | Run the Setup tool again, then check `BepInEx\LogOutput.log` and `BepInEx\plugins\ChaosMode.log`. If it's still broken, open an issue |
 
 ## How it works
 
