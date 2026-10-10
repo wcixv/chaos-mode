@@ -1,8 +1,11 @@
-**Chaos Mode v1.1** adds an optional BepInEx version. The normal install and the mod itself are unchanged.
+**Chaos Mode v1.1** now runs on BepInEx.
 
-**Normal install:** download `ChaosMode-v1.1.zip`, copy everything except the `BepInEx-version` folder into the game folder (Steam → Manage → Browse local files), host a Friends Only or Invite Only lobby, and press **F2**.
+**Install:**
+1. Set up BepInEx once with the community [Setup tool](https://github.com/swyf-modding/Setup). It installs BepInEx and the fixed runtime files this game needs. The README has the exact command.
+2. Download `ChaosMode-v1.1.zip` and copy its `BepInEx` folder into the game folder (Steam → Manage → Browse local files). Copy `ChatBridge` too if you want YouTube, TikTok or Kick chat, or the OBS overlay.
+3. Host a Friends Only or Invite Only lobby and press **F2**.
 
-**New: BepInEx version.** If you run other BepInEx mods, the zip has a `BepInEx-version` folder with its own README. It needs the community [Setup tool](https://github.com/swyf-modding/Setup) first, which installs BepInEx and the fixed runtime files this game needs.
+**Coming from v1.0?** Delete `winhttp.dll`, `doorstop_config.ini`, the `ModLoader` folder and `Mods\ChaosMode.dll` first.
 
 - 24 chaos events (16 punishments, 8 rewards)
 - Creator Mode: chat votes on Twitch, YouTube, TikTok (via TikFinity) and Kick

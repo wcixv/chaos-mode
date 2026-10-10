@@ -31,18 +31,26 @@ A party/streamer mod for <i>Scam With Your Friends</i>: random events, chat vote
 
 ## Install
 
+Chaos Mode runs on BepInEx. This game needs some fixed runtime files before BepInEx works, so there's a one-time setup first.
+
+**1. Set up BepInEx (once)**
+
+Use the community [Setup tool](https://github.com/swyf-modding/Setup). Download it (Code → Download ZIP), extract it, open PowerShell in that folder and run the line below with your own game folder. Run it again after game updates.
+
+```
+powershell -ExecutionPolicy Bypass -File .\setup.ps1 -GameDir "C:\...\steamapps\common\Scam With Your Friends Playtest"
+```
+
+**2. Install Chaos Mode**
+
 1. Download **`ChaosMode-v1.1.zip`** from [Releases](../../releases/latest).
 2. In Steam: right-click the game → **Manage → Browse local files**.
-3. Copy **everything** from the zip except the `BepInEx-version` folder into that folder (`winhttp.dll` sits next to the game's `.exe`).
+3. Copy the **`BepInEx`** folder from the zip into that folder. It merges with the one the Setup tool made. Also copy **`ChatBridge`** if you want chat votes from YouTube, TikTok or Kick, or the OBS overlay.
 4. Launch the game, host a **Friends Only** or **Invite Only** lobby and press **F2**.
 
-**Uninstall:** delete `winhttp.dll` from the game folder.
+**Coming from v1.0?** Delete `winhttp.dll`, `doorstop_config.ini`, the `ModLoader` folder and `Mods\ChaosMode.dll` from the game folder before step 1. The Setup tool leaves existing copies alone, and the old ones point at the v1.0 loader.
 
-### Using other mods? (BepInEx version, optional)
-
-The v1.1 zip also has a **BepInEx version** in `BepInEx-version/` for people who run other BepInEx mods. It's the same mod, started by BepInEx instead of the built-in loader. Most people should use the normal install above.
-
-BepInEx needs some fixed runtime files on this game, which the community [Setup tool](https://github.com/swyf-modding/Setup) installs for you. Read `BepInEx-version/README.txt` in the zip for the steps. Thanks to the swyf-modding folks for working this out.
+**Uninstall:** delete `BepInEx\plugins\ChaosMode` from the game folder.
 
 ## Events
 
@@ -88,11 +96,11 @@ In ChatBridge, click **Copy** next to *OBS overlay*. In OBS, add a **Browser** s
 | Windows warns about ChatBridge | *More info → Run anyway* (it isn't code-signed) |
 | TikTok won't connect | Open TikFinity, log in and enable its Event API (port 21213) |
 | Kick says "lookup blocked" | Put your `kickChatroomId` in `ChatBridge\chatbridge.json` |
-| Something broke after a game update | Check `ModLoader\ModLoader.log` and `Mods\ChaosMode.log`, then open an issue |
+| Something broke after a game update | Run the Setup tool again, then check `BepInEx\LogOutput.log` and `BepInEx\plugins\ChaosMode\ChaosMode.log`. If it's still broken, open an issue |
 
 ## How it works
 
-- **ModLoader:** a tiny [UnityDoorstop](https://github.com/NeighTools/UnityDoorstop) entry point that loads every DLL in `Mods\`. BepInEx can't run on this game's stripped Unity 6 runtime.
+- **BepInEx:** loads the mod. This game's stripped Unity 6 runtime needs fixed files before BepInEx can start, which the community [Setup tool](https://github.com/swyf-modding/Setup) installs. (v1.0 used a tiny [UnityDoorstop](https://github.com/NeighTools/UnityDoorstop) loader instead; its source is still in `src/ModLoader`.)
 - **ChaosMode.dll:** calls the game's own server functions (money, quota, clock, ragdolls, teleports), so every effect syncs to friends without them installing anything.
 - **ChatBridge:** a small Windows app that reads stream chat and passes votes to the mod over `localhost:47800`. It also serves the OBS overlay on `localhost:47801`.
 
@@ -100,4 +108,4 @@ Build from source with `build.sh`. You'll need the .NET SDK, Mono and Node 22, p
 
 ## License
 
-MIT for this project's code. The release zip also contains UnityDoorstop (LGPL-2.1).
+MIT for this project's code. The release zip only has this project's files. BepInEx and UnityDoorstop (both LGPL-2.1) come from the Setup tool.
