@@ -38,6 +38,22 @@ namespace ChaosMode
             return null;
         }
 
+        // Creator Mode (streamer mode) needs the ChatBridge app installed next to the game: <game>\ChatBridge\.
+        private float bridgeCheckedAt = -100f;
+        private bool bridgeInstalled;
+        private bool ChatBridgeInstalled()
+        {
+            if (Time.unscaledTime - bridgeCheckedAt < 2f) return bridgeInstalled;
+            bridgeCheckedAt = Time.unscaledTime;
+            try
+            {
+                string dir = Path.Combine(Path.GetDirectoryName(Application.dataPath), "ChatBridge");
+                bridgeInstalled = File.Exists(Path.Combine(dir, "ChatBridge.exe")) && File.Exists(Path.Combine(dir, "chatbridge-core.exe"));
+            }
+            catch { bridgeInstalled = false; }
+            return bridgeInstalled;
+        }
+
         private void Update()
         {
             try
@@ -53,6 +69,7 @@ namespace ChaosMode
                 bool wantGui = showMenu || Time.unscaledTime < chaos.BannerUntil || (chaos.CreatorMode && chaos.ShowInGame);
                 if (gui.enabled != wantGui) gui.enabled = wantGui;
 
+                if (chaos.CreatorMode && !ChatBridgeInstalled()) chaos.CreatorMode = false;
                 chaos.Tick(LockReason() == null);
             }
             catch (Exception e) { Loader.Log("Update error: " + e); }
@@ -152,7 +169,16 @@ namespace ChaosMode
 
                 GUILayout.Space(6);
                 GUILayout.Label("<b>Creator Mode</b> (chat votes on events, back-to-back)");
-                chaos.CreatorMode = ui.Toggle(chaos.CreatorMode, "Creator Mode (chat votes)");
+                if (ChatBridgeInstalled())
+                    chaos.CreatorMode = ui.Toggle(chaos.CreatorMode, "Creator Mode (chat votes)");
+                else
+                {
+                    chaos.CreatorMode = false;
+                    GUI.color = new Color(1f, 0.55f, 0.5f);
+                    GUILayout.Label("Creator Mode is locked: ChatBridge isn't installed.");
+                    GUILayout.Label("Copy the ChatBridge folder from the download into the game folder.");
+                    GUI.color = Color.white;
+                }
                 chaos.ShowInGame = ui.Toggle(chaos.ShowInGame, "Show vote box in game (turn off if using the OBS overlay)");
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Vote length:");

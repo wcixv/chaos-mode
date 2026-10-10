@@ -45,7 +45,7 @@ powershell -ExecutionPolicy Bypass -File .\setup.ps1 -GameDir "C:\...\steamapps\
 
 1. Download **`ChaosMode-v1.1.zip`** from [Releases](../../releases/latest).
 2. In Steam: right-click the game → **Manage → Browse local files**.
-3. Copy the **`BepInEx`** folder from the zip into that folder. It merges with the one the Setup tool made. Also copy **`ChatBridge`** if you want chat votes from YouTube, TikTok or Kick, or the OBS overlay.
+3. Copy the **`BepInEx`** folder from the zip into that folder. It merges with the one the Setup tool made. Also copy the **`ChatBridge`** folder: Creator Mode (chat votes) stays locked until it's installed.
 4. Launch the game, host a **Friends Only** or **Invite Only** lobby and press **F2**.
 
 **Coming from v1.0?** Delete `winhttp.dll`, `doorstop_config.ini`, the `ModLoader` folder and `Mods\ChaosMode.dll` from the game folder before step 1. The Setup tool leaves existing copies alone, and the old ones point at the v1.0 loader.
@@ -77,7 +77,7 @@ Without Creator Mode, a random event fires every 30, 60 or 120 seconds. The F2 m
 
 ## Creator Mode (chat votes)
 
-1. Press **F2** and turn on **Creator Mode**.
+1. Make sure the `ChatBridge` folder is in the game folder (Creator Mode is locked without it), press **F2** and turn on **Creator Mode**.
 2. **Twitch:** type your channel in the F2 menu and press **Connect**.
 3. **YouTube / TikTok / Kick:** open `ChatBridge\ChatBridge.exe`, fill in your channels and press **START**.
    - TikTok uses **[TikFinity](https://tikfinity.com/)**. Keep it open and turn on its Event API.
