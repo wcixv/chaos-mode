@@ -1,7 +1,10 @@
 name: Publish release
+# Runs whenever a new release zip lands in release/ (named ChaosMode-vX.Y.zip with release/notes-vX.Y.md).
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
+    paths: ["release/*.zip"]
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:
@@ -9,10 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Create GitHub release with the mod zip
+      - name: Create GitHub release with the newest mod zip
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="${GITHUB_REF_NAME}"
-          gh release create "$TAG" "release/ChaosMode-${TAG}.zip" \
-            --title "Chaos Mode ${TAG}" --notes-file "release/notes-${TAG}.md"
+          ZIP=$(ls release/ChaosMode-v*.zip | sort -V | tail -1)
+          TAG=$(basename "$ZIP" .zip | sed 's/^ChaosMode-//')
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ZIP" --clobber
+          else
+            gh release create "$TAG" "$ZIP" --target "$GITHUB_SHA" --title "Chaos Mode $TAG" --notes-file "release/notes-$TAG.md" --latest
+          fi
