@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chaos Mode – Scam With Your Friends mod</title>
+<meta name="description" content="A party and streamer mod for Scam With Your Friends: 24 chaos events, chat votes from Twitch, YouTube, TikTok and Kick, and an OBS overlay.">
+<meta property="og:title" content="Chaos Mode – let your chat wreck the call center">
+<meta property="og:description" content="24 chaos events, chat votes from every platform, and an OBS overlay. Friends don't need the mod.">
+<meta property="og:image" content="assets/banner.png">
+<link rel="icon" href="assets/icon.png">
+<style>
+  @font-face { font-family: "Permanent Marker"; src: url(assets/fonts/permanent-marker-latin-400-normal.woff2) format("woff2"); font-display: swap; }
+  @font-face { font-family: "Rubik"; font-weight: 400; src: url(assets/fonts/rubik-latin-400-normal.woff2) format("woff2"); font-display: swap; }
+  @font-face { font-family: "Rubik"; font-weight: 500; src: url(assets/fonts/rubik-latin-500-normal.woff2) format("woff2"); font-display: swap; }
+  @font-face { font-family: "Rubik"; font-weight: 700; src: url(assets/fonts/rubik-latin-700-normal.woff2) format("woff2"); font-display: swap; }
+  @font-face { font-family: "Rubik"; font-weight: 900; src: url(assets/fonts/rubik-latin-900-normal.woff2) format("woff2"); font-display: swap; }
+  :root {
+    --board: #f6f8f7;
+    --board-edge: #c9d1d0;
+    --ink: #1c1f24;
+    --soft: #59606b;
+    --red: #e2332c;
+    --blue: #2453c9;
+    --green: #1e9e58;
+    --panel: #12131a;
+    --gold: #ffd23f;
+    --marker: "Permanent Marker", "Comic Sans MS", cursive;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; color: var(--ink); background: #dfe5e4;
+    font: 17px/1.6 "Rubik", system-ui, sans-serif;
+  }
+  a { color: var(--blue); }
+  :focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; border-radius: 4px; }
+
+  /* the whole page is a whiteboard hung in the office */
+  .board {
+    max-width: 1120px; margin: 28px auto; background: var(--board);
+    border: 14px solid #e9ecec; border-radius: 6px;
+    box-shadow: 0 0 0 2px var(--board-edge), 0 30px 60px -30px rgba(28,31,36,.45);
+    padding: 0 clamp(18px, 5vw, 64px) 40px;
+    background-image: radial-gradient(ellipse at 20% 0%, rgba(255,255,255,.9), transparent 60%);
+  }
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; gap: 16px; }
+  .logo { font-family: var(--marker); font-size: 28px; color: var(--red); text-decoration: none; transform: rotate(-2deg); display: inline-block; }
+  nav .links { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+  nav .links a { color: var(--ink); text-decoration: none; font-weight: 500; }
+  nav .links a:hover { color: var(--blue); }
+  nav .links a.btn, nav .links a.btn:hover { color: #fff; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; border-radius: 10px;
+    background: var(--red); color: #fff; font-weight: 700; text-decoration: none; font-size: 18px;
+    box-shadow: 0 4px 0 #a91f1a; transition: transform .1s, box-shadow .1s;
+  }
+  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #a91f1a; }
+  .btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
+
+  /* hero */
+  .hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; padding: 30px 0 60px; }
+  h1 {
+    font-family: var(--marker); font-weight: 400; font-size: clamp(38px, 5.2vw, 66px); line-height: 1.02;
+    margin: 0 0 22px; letter-spacing: -.5px;
+  }
+  h1 .scribble { position: relative; white-space: nowrap; }
+  h1 .scribble::after {
+    content: ""; position: absolute; left: -4px; right: -6px; bottom: .08em; height: .2em;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M2 14 C40 4, 80 18, 120 8 S180 6, 198 12' fill='none' stroke='%23e2332c' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center/100% 100%;
+  }
+  .lede { font-size: 20px; color: var(--soft); max-width: 46ch; margin: 0 0 28px; }
+  .cta { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .facts { list-style: none; padding: 0; margin: 26px 0 0; display: flex; gap: 18px; flex-wrap: wrap; color: var(--soft); font-size: 15px; }
+  .facts li::before { content: "✓ "; color: var(--green); font-weight: 900; }
+
+  /* the live vote widget (same design as the in-game/OBS overlay) */
+  .vote-wrap { position: relative; }
+  .tape { position: absolute; width: 110px; height: 30px; background: rgba(255, 228, 140, .75); top: -14px; left: 50%; transform: translateX(-50%) rotate(-3deg); z-index: 2; }
+  .vote {
+    background: var(--panel); color: #f2f2f6; border-radius: 18px; overflow: hidden; transform: rotate(1.2deg);
+    box-shadow: 0 24px 50px -18px rgba(18,19,26,.7);
+  }
+  .vote .bar { height: 5px; background: linear-gradient(90deg, #ff4d61, #ff8a4d); }
+  .vote .head { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px 8px; }
+  .vote .tag { font-weight: 900; color: #ff4d61; display: flex; align-items: center; gap: 9px; letter-spacing: .5px; }
+  .vote .dot { width: 9px; height: 9px; border-radius: 50%; background: #ff4d61; animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,77,97,.7);} 70% { box-shadow: 0 0 0 9px rgba(255,77,97,0);} 100% { box-shadow: 0 0 0 0 rgba(255,77,97,0);} }
+  .vote .timer { font-weight: 900; font-size: 30px; font-variant-numeric: tabular-nums; }
+  .vote .track { margin: 0 20px 14px; height: 7px; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; }
+  .vote .track span { display: block; height: 100%; background: var(--gold); border-radius: 99px; transition: width .25s linear; }
+  .opts { padding: 0 12px; display: grid; gap: 8px; }
+  .opt {
+    position: relative; display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+    padding: 11px 14px 11px 12px; border-radius: 12px; border: 0; background: rgba(255,255,255,.06); color: inherit;
+    font: inherit; cursor: pointer; overflow: hidden;
+  }
+  .opt:hover { background: rgba(255,255,255,.1); }
+  .opt.lead { box-shadow: inset 4px 0 0 var(--gold); }
+  .opt .fill { position: absolute; inset: 0 auto 0 0; width: 0; opacity: .32; transition: width .5s cubic-bezier(.2,.8,.2,1); }
+  .opt .n { position: relative; flex: none; width: 44px; height: 44px; border-radius: 11px; display: grid; place-items: center; font-weight: 900; font-size: 22px; color: #fff; }
+  .opt .t { position: relative; flex: 1; min-width: 0; }
+  .opt .t b { display: block; font-size: 19px; }
+  .opt .t b.good { color: #4de68c; }
+  .opt .t small { color: rgba(242,242,246,.62); font-size: 13px; }
+  .opt .p { position: relative; text-align: right; font-weight: 900; font-size: 21px; font-variant-numeric: tabular-nums; }
+  .opt .p small { display: block; font-weight: 400; font-size: 12px; color: rgba(242,242,246,.6); }
+  .vote .foot { display: flex; justify-content: space-between; padding: 12px 20px 16px; font-size: 13px; color: rgba(242,242,246,.62); }
+  .result { padding: 26px 20px 30px; text-align: center; }
+  .result .k { color: var(--gold); font-weight: 900; letter-spacing: 1px; }
+  .result .w { font-weight: 900; font-size: 40px; line-height: 1.05; margin: 6px 0; animation: pop .45s cubic-bezier(.2,1.6,.4,1); }
+  .result .d { color: rgba(242,242,246,.7); }
+  @keyframes pop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .hint { font-family: var(--marker); color: var(--blue); font-size: 16px; margin: 18px 0 0 8px; transform: rotate(-1.5deg); }
+  .hint::before { content: "↑ "; }
+
+  /* sections */
+  section { padding: 56px 0 8px; border-top: 2px dashed var(--board-edge); }
+  h2 { font-family: var(--marker); font-weight: 400; font-size: clamp(32px, 4vw, 46px); margin: 0 0 8px; line-height: 1.1; }
+  .sub { color: var(--soft); max-width: 62ch; margin: 0 0 30px; }
+
+  .trailer { aspect-ratio: 16/9; border-radius: 14px; overflow: hidden; background: var(--panel); display: grid; place-items: center; color: rgba(242,242,246,.75); box-shadow: 0 20px 40px -24px rgba(18,19,26,.6); }
+  .trailer video, .trailer iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .trailer p { font-family: var(--marker); font-size: 26px; margin: 0; }
+
+  /* events written on the board in marker */
+  .cols { display: grid; grid-template-columns: 1.4fr 1fr; gap: 40px; }
+  .col h3 { font-family: var(--marker); font-weight: 400; font-size: 28px; margin: 0 0 10px; }
+  .col.bad h3 { color: var(--red); }
+  .col.good h3 { color: var(--green); }
+  .list { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 28px; }
+  .col.good .list { columns: 1; }
+  .list li { break-inside: avoid; padding: 7px 0 7px 26px; position: relative; }
+  .list li::before { position: absolute; left: 0; top: 6px; font-family: var(--marker); }
+  .col.bad .list li::before { content: "✗"; color: var(--red); }
+  .col.good .list li::before { content: "✓"; color: var(--green); }
+  .list b { display: block; font-weight: 700; }
+  .list span { color: var(--soft); font-size: 15px; }
+
+  .platforms { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 0 0 30px; }
+  .plat { background: #fff; border: 2px solid var(--ink); border-radius: 12px; padding: 16px; }
+  .plat b { display: block; font-size: 19px; }
+  .plat span { color: var(--soft); font-size: 14px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .shot { width: 100%; border-radius: 12px; box-shadow: 0 18px 36px -20px rgba(18,19,26,.6); transform: rotate(-1deg); }
+
+  ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 18px; max-width: 70ch; }
+  ol.steps li { counter-increment: s; position: relative; padding-left: 64px; min-height: 48px; }
+  ol.steps li::before {
+    content: counter(s); position: absolute; left: 0; top: -4px; width: 46px; height: 46px; border-radius: 50%;
+    border: 3px solid var(--blue); color: var(--blue); font-family: var(--marker); font-size: 24px; display: grid; place-items: center;
+  }
+  code { background: #e6ebea; padding: 2px 6px; border-radius: 5px; font-size: .92em; }
+
+  details { border-bottom: 1px solid var(--board-edge); padding: 14px 0; max-width: 80ch; }
+  summary { cursor: pointer; font-weight: 700; }
+  details p { margin: 8px 0 0; color: var(--soft); }
+
+  footer { margin-top: 56px; padding-top: 22px; border-top: 2px dashed var(--board-edge); color: var(--soft); font-size: 14px; display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+
+  @media (max-width: 900px) {
+    .hero, .two, .cols { grid-template-columns: 1fr; }
+    .platforms { grid-template-columns: 1fr 1fr; }
+    .board { margin: 0; border-width: 8px; }
+  }
+  @media (max-width: 520px) {
+    .list { columns: 1; }
+    .platforms { grid-template-columns: 1fr; }
+    nav .links a:not(.btn) { display: none; }
+    .vote { transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="board">
+  <nav>
+    <a class="logo" href="#">Chaos Mode</a>
+    <div class="links">
+      <a href="#events">Events</a>
+      <a href="#creators">For streamers</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/bobby675-cpu/chaos-mode" id="gh">GitHub</a>
+      <a class="btn" href="https://github.com/bobby675-cpu/chaos-mode/releases/latest" id="dl-top">Download</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <h1>Let your chat wreck the <span class="scribble">call center</span>.</h1>
+      <p class="lede">A party mod for <i>Scam With Your Friends</i>. Every minute your viewers vote on what happens next: get tased, lose half the cash, or double every dollar you scam.</p>
+      <div class="cta">
+        <a class="btn" href="https://github.com/bobby675-cpu/chaos-mode/releases/latest" id="dl-hero">Download Chaos Mode</a>
+        <a class="btn ghost" href="#trailer">Watch the trailer</a>
+      </div>
+      <ul class="facts">
+        <li>Free</li>
+        <li>Friends don't need it</li>
+        <li>Twitch, YouTube, TikTok, Kick</li>
+      </ul>
+    </div>
+    <div class="vote-wrap">
+      <div class="tape" aria-hidden="true"></div>
+      <div class="vote" id="vote" aria-live="polite"></div>
+      <p class="hint">Click an option to vote, like your chat would</p>
+    </div>
+  </header>
+
+  <section id="trailer">
+    <h2>See it in action</h2>
+    <p class="sub">Real footage from a chaotic shift.</p>
+    <div class="trailer" id="trailer-box"><p>Trailer coming soon</p></div>
+  </section>
+
+  <section id="events">
+    <h2>24 things that can happen to your shift</h2>
+    <p class="sub">Chat picks one of three. Without chat, a random one fires every 30, 60 or 120 seconds. You can also trigger any of them yourself from the F2 menu.</p>
+    <div class="cols">
+      <div class="col bad">
+        <h3>Punishments</h3>
+        <ul class="list">
+          <li><b>Drunk</b><span>Everyone is wasted for 30 seconds</span></li>
+          <li><b>Knockout</b><span>Everyone hits the floor</span></li>
+          <li><b>Tased</b><span>Everyone gets tased</span></li>
+          <li><b>Taser Party</b><span>Tased every 6 seconds for 25 seconds</span></li>
+          <li><b>Launch</b><span>Everyone gets yeeted</span></li>
+          <li><b>Phone Lines Cut</b><span>Every call hangs up mid-scam</span></li>
+          <li><b>Bankruptcy</b><span>The team loses half its cash</span></li>
+          <li><b>Tax Man</b><span>The team loses 20%</span></li>
+          <li><b>Pickpocket</b><span>Someone loses all their shopping money</span></li>
+          <li><b>Boss Is Furious</b><span>Quota up 50%</span></li>
+          <li><b>Boss Is Angry</b><span>Quota up 20%</span></li>
+          <li><b>Time Crunch</b><span>Half the clock disappears</span></li>
+          <li><b>Evacuation</b><span>Everyone back to the entrance</span></li>
+          <li><b>You're Fired (jk)</b><span>A very convincing fake firing</span></li>
+          <li><b>Huddle Up</b><span>Everyone teleports to one player</span></li>
+          <li><b>Swap!</b><span>Two players trade places</span></li>
+        </ul>
+      </div>
+      <div class="col good">
+        <h3>Rewards</h3>
+        <ul class="list">
+          <li><b>Money Rain</b><span>Everyone gets $150</span></li>
+          <li><b>Jackpot</b><span>One lucky player wins $750</span></li>
+          <li><b>Overtime</b><span>60 more seconds on the clock</span></li>
+          <li><b>Payday</b><span>$400 of Scamazon money each</span></li>
+          <li><b>Quota Cut</b><span>Quota down 25%</span></li>
+          <li><b>Double Cash</b><span>All scam money counts double for 60 seconds</span></li>
+          <li><b>Boss On Break</b><span>The clock freezes for 30 seconds</span></li>
+          <li><b>Double or Nothing</b><span>The team's cash doubles, or vanishes</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="creators">
+    <h2>Built for streams</h2>
+    <p class="sub">Turn on Creator Mode and votes run back to back. The winner fires, and the next vote starts five seconds later.</p>
+    <div class="platforms">
+      <div class="plat"><b>Twitch</b><span>Built in. Type your channel in the F2 menu.</span></div>
+      <div class="plat"><b>YouTube</b><span>Through ChatBridge, using your @handle.</span></div>
+      <div class="plat"><b>TikTok</b><span>Through ChatBridge and TikFinity.</span></div>
+      <div class="plat"><b>Kick</b><span>Through ChatBridge, using your channel name.</span></div>
+    </div>
+    <div class="two">
+      <div>
+        <h3 style="margin-top:0">ChatBridge</h3>
+        <p>A small Windows app that reads your stream chat and sends the votes into the game. Fill in your channels, press Start, and watch the lights go green.</p>
+        <h3>OBS overlay</h3>
+        <p>ChatBridge also serves the vote widget as a Browser Source. Copy the link, add it in OBS at 480 × 420, and turn off the in-game vote box so viewers only see it once.</p>
+      </div>
+      <img class="shot" src="assets/chatbridge.png" alt="The ChatBridge window showing connected platforms and incoming votes">
+    </div>
+  </section>
+
+  <section id="install">
+    <h2>Install in a minute</h2>
+    <p class="sub">Windows, Steam version of the playtest.</p>
+    <ol class="steps">
+      <li>Download <b>ChaosMode-v1.0.zip</b> from the <a href="https://github.com/bobby675-cpu/chaos-mode/releases/latest" id="dl-steps">latest release</a>.</li>
+      <li>In Steam, right-click the game and choose <b>Manage → Browse local files</b>.</li>
+      <li>Copy everything from the zip into that folder. <code>winhttp.dll</code> goes next to the game's exe.</li>
+      <li>Host a <b>Friends Only</b> or <b>Invite Only</b> lobby and press <b>F2</b>. Chaos Mode is locked in public lobbies.</li>
+    </ol>
+  </section>
+
+  <section id="help">
+    <h2>If something's off</h2>
+    <details><summary>Tased, Launch or Knockout do nothing</summary><p>Turn off <b>Ragdoll Immunity</b> in the game's settings. It blocks every knock-down effect.</p></details>
+    <details><summary>The F2 menu says Locked</summary><p>You need to be the host, and the lobby has to be Friends Only or Invite Only.</p></details>
+    <details><summary>Windows warns about ChatBridge</summary><p>It isn't code-signed. Click <b>More info</b>, then <b>Run anyway</b>.</p></details>
+    <details><summary>TikTok won't connect</summary><p>Open TikFinity, log in, and turn on its Event API (port 21213). ChatBridge connects to it automatically.</p></details>
+    <details><summary>How do I uninstall it?</summary><p>Delete <code>winhttp.dll</code> from the game folder. The game then runs without any mods.</p></details>
+  </section>
+
+  <footer>
+    <span>Unofficial fan mod. Not affiliated with the developers of Scam With Your Friends. Game updates can break it.</span>
+    <span>MIT licensed. Uses UnityDoorstop.</span>
+  </footer>
+</div>
+
+<script>
+// Interactive demo of the vote widget: fake chat votes trickle in, and clicking an option adds your vote.
+const pool = [
+  ["Drunk", "Everyone is wasted for 30s", false], ["Bankruptcy", "Team loses half its cash", false],
+  ["Jackpot", "One lucky player wins $750", true], ["Tased", "Everyone gets tased", false],
+  ["Double Cash", "All scam money ×2 for 60s", true], ["Launch", "Everyone gets yeeted", false],
+  ["Time Crunch", "Half the clock disappears", false], ["Boss On Break", "Clock frozen for 30s", true],
+  ["Double or Nothing", "Cash doubles, or vanishes", false], ["Phone Lines Cut", "Every call hangs up", false]
+];
+const cols = ["#5c9eff", "#bf73ff", "#ff9e40"];
+const box = document.getElementById("vote");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let opts, counts, left, total, mine, phase, timer;
+const DURATION = 15;
+
+function pick() {
+  const p = [...pool].sort(() => Math.random() - .5).slice(0, 3);
+  opts = p; counts = [0, 0, 0]; left = DURATION; mine = -1; phase = "vote";
+  box.innerHTML = `
+    <div class="bar"></div>
+    <div class="head"><div class="tag"><span class="dot"></span>Chat decides</div><div class="timer" id="tm"></div></div>
+    <div class="track"><span id="tr"></span></div>
+    <div class="opts">${opts.map((o, i) => `
+      <button class="opt" data-i="${i}" aria-label="Vote ${i + 1}: ${o[0]}">
+        <span class="fill" style="background:${cols[i]}"></span>
+        <span class="n" style="background:${cols[i]}">${i + 1}</span>
+        <span class="t"><b class="${o[2] ? "good" : ""}">${o[0]}</b><small>${o[1]}</small></span>
+        <span class="p"><span class="pc">0%</span><small class="ct">0 votes</small></span>
+      </button>`).join("")}</div>
+    <div class="foot"><span>Type 1, 2 or 3 in chat</span><span id="tot">0 votes</span></div>`;
+  box.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => {
+    if (phase !== "vote") return;
+    const i = +b.dataset.i;
+    if (mine >= 0) counts[mine]--;
+    mine = i; counts[i]++; draw();
+  }));
+  draw();
+}
+
+function draw() {
+  total = counts.reduce((a, b) => a + b, 0);
+  let lead = counts.indexOf(Math.max(...counts));
+  if (total === 0) lead = -1;
+  box.querySelectorAll(".opt").forEach((b, i) => {
+    const pct = total ? Math.round(100 * counts[i] / total) : 0;
+    b.querySelector(".fill").style.width = pct + "%";
+    b.querySelector(".pc").textContent = pct + "%";
+    b.querySelector(".ct").textContent = counts[i] + (counts[i] === 1 ? " vote" : " votes") + (mine === i ? " (incl. you)" : "");
+    b.classList.toggle("lead", i === lead);
+  });
+  document.getElementById("tm").textContent = Math.ceil(left) + "s";
+  document.getElementById("tr").style.width = (left / DURATION * 100) + "%";
+  document.getElementById("tot").textContent = total + (total === 1 ? " vote" : " votes");
+}
+
+function reveal() {
+  phase = "result";
+  const max = Math.max(...counts);
+  const ties = counts.map((c, i) => c === max ? i : -1).filter(i => i >= 0);
+  const w = ties[Math.floor(Math.random() * ties.length)];
+  const o = opts[w];
+  box.innerHTML = `<div class="bar" style="${o[2] ? "background:#1e9e58" : ""}"></div>
+    <div class="result"><div class="k">Chat has spoken</div>
+    <div class="w" style="color:${o[2] ? "#4de68c" : "#ff4d61"}">${o[0]}</div>
+    <div class="d">${o[1]}</div><div class="d" style="margin-top:8px;font-size:13px">${counts[w]} of ${total} votes</div></div>`;
+  setTimeout(pick, 3500);
+}
+
+pick();
+setInterval(() => {
+  if (phase !== "vote") return;
+  left -= .25;
+  if (!reduce && Math.random() < .55) { counts[Math.floor(Math.random() * 3)]++; }
+  if (left <= 0) { left = 0; draw(); reveal(); return; }
+  draw();
+}, 250);
+
+// Point download links at the real repo when hosted on GitHub Pages (owner.github.io/repo).
+(function () {
+  const m = location.hostname.match(/^([^.]+)\.github\.io$/);
+  const repo = location.pathname.split("/").filter(Boolean)[0];
+  if (!m || !repo) return;
+  const base = `https://github.com/${m[1]}/${repo}`;
+  document.getElementById("gh").href = base;
+  for (const id of ["dl-top", "dl-hero", "dl-steps"]) document.getElementById(id).href = base + "/releases/latest";
+})();
+</script>
+</body>
+</html>

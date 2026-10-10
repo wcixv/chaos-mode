@@ -1,0 +1,232 @@
+// Chaos Mode - standalone mod. Press F2 for its menu.
+// Only runs when YOU are the host of a Friends Only or Invite Only lobby.
+using System;
+using System.IO;
+using Mirror;
+using UnityEngine;
+
+namespace ChaosMode
+{
+    public class ChaosPlugin : MonoBehaviour
+    {
+        private readonly Chaos chaos = new Chaos();
+        private bool showMenu;
+        private bool showTest;
+        private ChaosGui gui;
+        private readonly ModShared.ClickGui ui = new ModShared.ClickGui();
+        private readonly VoteOverlay overlay = new VoteOverlay();
+        private Rect window = new Rect(440, 40, 340, 0);
+        private GUIStyle bannerStyle, voteStyle;
+        private string channelInput = "";
+        private static string CfgPath => Path.Combine(Path.GetDirectoryName(typeof(Loader).Assembly.Location), "ChaosMode.cfg");
+
+        private void Awake()
+        {
+            gui = gameObject.AddComponent<ChaosGui>();
+            gui.owner = this;
+            gui.enabled = false;
+            Loader.Log("Chaos Mode ready. Press F2 in game.");
+            try { if (File.Exists(CfgPath)) channelInput = File.ReadAllText(CfgPath).Trim(); } catch { }
+        }
+
+        // hostLobbyMode: 0 = Public, 1 = Invite Only, 2 = Friends Only
+        private static string LockReason()
+        {
+            if (!NetworkServer.active) return "You must be the HOST.";
+            if (SteamCreateLobbyForServer.hostLobbyMode == 0) return "Public lobby - Chaos Mode disabled.";
+            if (ScammerGameManager.Instance == null) return "Start a game first.";
+            return null;
+        }
+
+        private void Update()
+        {
+            try
+            {
+                var kb = UnityEngine.InputSystem.Keyboard.current;
+                if (kb != null && kb.f2Key.wasPressedThisFrame) showMenu = !showMenu;
+                ui.Poll(showMenu);
+
+                var mc = Metater.MetaCursor.Instance;
+                if (mc != null) { if (showMenu) mc.CursorUsers.Add(this); else mc.CursorUsers.Remove(this); }
+                InputBlock.Set(this, showMenu);
+
+                bool wantGui = showMenu || Time.unscaledTime < chaos.BannerUntil || (chaos.CreatorMode && chaos.ShowInGame);
+                if (gui.enabled != wantGui) gui.enabled = wantGui;
+
+                chaos.Tick(LockReason() == null);
+            }
+            catch (Exception e) { Loader.Log("Update error: " + e); }
+        }
+
+        private void OnDestroy() { chaos.Twitch.Disconnect(); chaos.Bridge.KeepAlive(false); }
+
+        private void OnDisable() { var mc = Metater.MetaCursor.Instance; if (mc != null) mc.CursorUsers.Remove(this); InputBlock.Set(this, false); }
+
+        internal void DrawGui()
+        {
+            DrawBanner();
+            overlay.Draw(chaos);
+            if (showMenu) { DrawWindow(); ui.EndFrame(); }
+        }
+
+        private void DrawBanner()
+        {
+            if (Time.unscaledTime > chaos.BannerUntil || string.IsNullOrEmpty(chaos.Banner)) return;
+            if (bannerStyle == null)
+            {
+                bannerStyle = new GUIStyle(GUI.skin.box) { fontSize = 22, alignment = TextAnchor.MiddleCenter, wordWrap = true };
+                bannerStyle.normal.textColor = new Color(1f, 0.35f, 0.25f);
+            }
+            float w = Mathf.Min(900f, Screen.width - 40f);
+            GUI.Box(new Rect((Screen.width - w) / 2f, 30f, w, 70f), new GUIContent(chaos.Banner), bannerStyle);
+        }
+
+        private void DrawVote()
+        {
+            if (!chaos.CreatorMode) return;
+            var v = chaos.Vote;
+            if (voteStyle == null)
+            {
+                voteStyle = new GUIStyle(GUI.skin.box) { fontSize = 20, alignment = TextAnchor.UpperLeft, wordWrap = true };
+                voteStyle.normal.textColor = Color.white;
+            }
+            string txt; int lines;
+            if (v.Active)
+            {
+                txt = "CHAT VOTE - type 1, 2 or 3!   " + (chaos.WaitingForDay ? "(paused until the workday)" : Mathf.CeilToInt(v.SecondsLeft) + "s") + "\n";
+                for (int i = 0; i < v.Options.Length; i++)
+                {
+                    int pct = v.TotalVotes > 0 ? Mathf.RoundToInt(100f * v.Counts[i] / v.TotalVotes) : 0;
+                    txt += "\n" + (i + 1) + ".  " + v.Options[i] + "   -   " + v.Counts[i] + " (" + pct + "%)";
+                }
+                lines = v.Options.Length + 2;
+            }
+            else
+            {
+                txt = chaos.WaitingForDay ? "CHAT VOTE - starts when the workday begins" : "CHAT VOTE - next vote in " + Mathf.CeilToInt(chaos.NextVoteIn) + "s";
+                if (chaos.LastResult != "") txt += "\n\nLast: " + chaos.LastResult;
+                lines = chaos.LastResult != "" ? 3 : 1;
+            }
+            float w = 460f, h = 30f + 30f * lines;
+            GUI.Box(new Rect(Screen.width - w - 20f, 120f, w, h), new GUIContent(txt), voteStyle);
+        }
+
+        private void DrawWindow()
+        {
+            var area = new Rect(440f, 40f, 360f, Screen.height - 60f);
+            GUILayout.BeginArea(area);
+            GUILayout.BeginVertical(GUI.skin.box);
+            ui.BeginWindow(area);
+            GUILayout.Label("<b>Chaos Mode  [F2]</b>");
+            string locked = LockReason();
+            if (locked != null)
+            {
+                GUI.color = new Color(1f, 0.55f, 0.5f);
+                GUILayout.Label("LOCKED: " + locked);
+                GUILayout.Label("Host a Friends Only or Invite Only game to use this.");
+                GUI.color = Color.white;
+            }
+            else
+            {
+                chaos.Enabled = ui.Toggle(chaos.Enabled, "Chaos Mode ON");
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Every:");
+                foreach (var sec in new[] { 30f, 60f, 120f })
+                    if (ui.Button((chaos.Interval == sec ? "> " : "") + sec + "s")) chaos.Interval = sec;
+                GUILayout.EndHorizontal();
+                if (chaos.Enabled) GUILayout.Label("Next event in " + Mathf.CeilToInt(chaos.NextEventIn) + "s" + (chaos.LastEvent != "" ? "   (last: " + chaos.LastEvent + ")" : ""));
+                if (ui.Button("Trigger random event now")) chaos.TriggerRandom();
+                showTest = ui.Toggle(showTest, "Test a specific event");
+                if (showTest)
+                {
+                    int col = 0;
+                    GUILayout.BeginHorizontal();
+                    foreach (var name in chaos.EventNames)
+                    {
+                        if (col == 3) { GUILayout.EndHorizontal(); GUILayout.BeginHorizontal(); col = 0; }
+                        if (ui.Button(name, GUILayout.Width(108))) chaos.TriggerByName(name);
+                        col++;
+                    }
+                    GUILayout.EndHorizontal();
+                }
+
+                GUILayout.Space(6);
+                GUILayout.Label("<b>Creator Mode</b> (chat votes on events, back-to-back)");
+                chaos.CreatorMode = ui.Toggle(chaos.CreatorMode, "Creator Mode (chat votes)");
+                chaos.ShowInGame = ui.Toggle(chaos.ShowInGame, "Show vote box in game (turn off if using the OBS overlay)");
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Vote length:");
+                foreach (var sec in new[] { 15f, 25f, 40f })
+                    if (ui.Button((chaos.VoteSeconds == sec ? "> " : "") + sec + "s")) chaos.VoteSeconds = sec;
+                GUILayout.EndHorizontal();
+                GUILayout.Label("Twitch (built in):");
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Channel:", GUILayout.Width(60));
+                channelInput = ui.TextField("channel", channelInput, 40);
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                if (ui.Button(chaos.Twitch.Connected ? "Reconnect" : "Connect"))
+                {
+                    chaos.Twitch.Connect(channelInput);
+                    try { File.WriteAllText(CfgPath, channelInput ?? ""); } catch { }
+                }
+                if (ui.Button("Disconnect")) chaos.Twitch.Disconnect();
+                GUILayout.EndHorizontal();
+                GUILayout.Label("  " + chaos.Twitch.Status);
+                GUILayout.Label("YouTube / TikTok / Kick:");
+                GUILayout.Label("  " + (chaos.CreatorMode ? chaos.Bridge.Status : "(turn on Creator Mode)"));
+                if (chaos.CreatorMode && !chaos.Vote.Active && ui.Button("Start next vote now")) chaos.StartVote();
+            }
+            GUILayout.Label("<size=10>16 punishments, 8 rewards. Friends don't need the mod.</size>");
+            GUILayout.EndVertical();
+            GUILayout.EndArea();
+        }
+    }
+
+    // OnGUI only exists while the menu or a banner is showing, so it can't block the in-game computer.
+    public class ChaosGui : MonoBehaviour
+    {
+        public ChaosPlugin owner;
+        private void OnGUI() { if (owner != null) owner.DrawGui(); }
+    }
+
+    public static class ModMain
+    {
+        public static void OnGameReady()
+        {
+            var go = new GameObject("ChaosMode");
+            UnityEngine.Object.DontDestroyOnLoad(go);
+            go.hideFlags = HideFlags.HideAndDontSave;
+            go.AddComponent<ChaosPlugin>();
+        }
+    }
+
+    public static class Loader
+    {
+        public static void Log(string msg)
+        {
+            try
+            {
+                string path = Path.Combine(Path.GetDirectoryName(typeof(Loader).Assembly.Location), "ChaosMode.log");
+                File.AppendAllText(path, DateTime.Now.ToString("HH:mm:ss") + "  " + msg + Environment.NewLine);
+            }
+            catch { }
+        }
+    }
+}
+
+namespace ChaosMode
+{
+    // Stops the player moving/looking while a mod menu is open (same blockers the in-game computer uses).
+    public static class InputBlock
+    {
+        public static void Set(MonoBehaviour who, bool on)
+        {
+            var pc = Metater.MetaPlayerController.Instance;
+            if (pc == null || pc.blocker == null) return;
+            var b = pc.blocker;
+            if (on) { b.InputBlockers.Add(who); b.MoveBlockers.Add(who); b.JumpBlockers.Add(who); b.StrafeCameraBlockers.Add(who); }
+            else { b.InputBlockers.Remove(who); b.MoveBlockers.Remove(who); b.JumpBlockers.Remove(who); b.StrafeCameraBlockers.Remove(who); }
+        }
+    }
+}

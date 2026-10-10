@@ -1,0 +1,6 @@
+out/
+node_modules/
+dist/
+*.log
+chatbridge.json
+ChaosMode.cfg

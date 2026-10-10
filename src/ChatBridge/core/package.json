@@ -1,0 +1,17 @@
+{
+  "name": "chatbridge",
+  "version": "1.0.0",
+  "description": "Sends YouTube / TikTok / Kick / Twitch chat to the Chaos Mode game mod over localhost",
+  "main": "index.js",
+  "bin": "index.js",
+  "license": "MIT",
+  "pkg": {
+    "assets": []
+  },
+  "dependencies": {
+    "tiktok-live-connector": "^2.5.0",
+    "tmi.js": "^1.8.5",
+    "ws": "^8.22.0",
+    "youtube-chat": "^2.2.0"
+  }
+}

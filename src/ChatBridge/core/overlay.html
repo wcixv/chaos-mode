@@ -1,0 +1,170 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Chaos Mode Vote Overlay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: rgba(14, 14, 20, 0.92);
+    --card: rgba(255, 255, 255, 0.06);
+    --text: #f2f2f6;
+    --dim: rgba(242, 242, 246, 0.62);
+    --accent: #ff4d61;
+    --gold: #ffd23f;
+    --good: #4de68c;
+    --c1: #5c9eff; --c2: #bf73ff; --c3: #ff9e40;
+  }
+  html, body { margin: 0; background: transparent; overflow: hidden; }
+  body { font-family: "Rubik", "Segoe UI", system-ui, sans-serif; color: var(--text); padding: 16px; }
+
+  .panel {
+    width: 440px; background: var(--bg); border-radius: 18px; overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.07);
+    transform-origin: top right;
+    transition: opacity .35s ease, transform .35s cubic-bezier(.2,1.4,.4,1);
+  }
+  .panel.hidden { opacity: 0; transform: translateY(-12px) scale(.96); }
+  .topbar { height: 5px; background: linear-gradient(90deg, var(--accent), #ff8a4d); }
+  .head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px 8px; }
+  .tag { font-weight: 900; letter-spacing: 2px; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+  .live { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 rgba(255,77,97,.7); animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,77,97,.7);} 70% { box-shadow: 0 0 0 9px rgba(255,77,97,0);} 100% { box-shadow: 0 0 0 0 rgba(255,77,97,0);} }
+  .timer { font-weight: 900; font-size: 30px; font-variant-numeric: tabular-nums; }
+  .timer.urgent { color: var(--accent); animation: shake .5s infinite; }
+  @keyframes shake { 0%,100% { transform: translateX(0);} 25% { transform: translateX(-2px);} 75% { transform: translateX(2px);} }
+  .track { margin: 0 20px 14px; height: 7px; border-radius: 99px; background: rgba(255,255,255,0.1); overflow: hidden; }
+  .track > div { height: 100%; width: 100%; border-radius: 99px; background: var(--gold); transition: width .25s linear, background .3s; }
+  .track.urgent > div { background: var(--accent); }
+
+  .opts { padding: 0 12px 6px; display: flex; flex-direction: column; gap: 8px; }
+  .opt { position: relative; display: flex; align-items: center; gap: 14px; padding: 11px 14px 11px 12px; border-radius: 12px; background: var(--card); overflow: hidden; transition: transform .3s; }
+  .opt.lead { box-shadow: inset 4px 0 0 var(--gold); transform: scale(1.015); }
+  .fill { position: absolute; inset: 0 auto 0 0; width: 0%; opacity: .32; transition: width .5s cubic-bezier(.2,.8,.2,1); }
+  .badge { position: relative; flex: none; width: 44px; height: 44px; border-radius: 11px; display: grid; place-items: center; font-weight: 900; font-size: 24px; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+  .info { position: relative; flex: 1; min-width: 0; }
+  .name { font-weight: 700; font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .name.good { color: var(--good); }
+  .desc { font-size: 13px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .nums { position: relative; text-align: right; flex: none; }
+  .pct { font-weight: 900; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .cnt { font-size: 12px; color: var(--dim); }
+  .bump { animation: bump .35s; }
+  @keyframes bump { 0% { transform: scale(1);} 40% { transform: scale(1.25);} 100% { transform: scale(1);} }
+
+  .foot { display: flex; justify-content: space-between; padding: 8px 20px 14px; font-size: 13px; color: var(--dim); }
+  .foot b { color: var(--text); }
+
+  .result { padding: 18px 20px 22px; text-align: center; }
+  .result .k { font-weight: 900; letter-spacing: 3px; font-size: 14px; color: var(--gold); }
+  .result .w { font-weight: 900; font-size: 38px; margin: 6px 0 4px; line-height: 1.05; animation: pop .45s cubic-bezier(.2,1.6,.4,1); }
+  .result .d { font-size: 15px; color: var(--dim); }
+  .result .v { font-size: 13px; color: var(--dim); margin-top: 8px; }
+  @keyframes pop { 0% { transform: scale(.4); opacity: 0;} 100% { transform: scale(1); opacity: 1;} }
+  .flash { animation: flash .6s 2; }
+  @keyframes flash { 50% { background: rgba(255,77,97,.25);} }
+  .flash.goodflash { animation-name: gflash; }
+  @keyframes gflash { 50% { background: rgba(77,230,140,.22);} }
+
+  .idle { padding: 12px 20px 16px; }
+  .idle .msg { font-size: 15px; color: var(--dim); margin-top: 2px; }
+  .idle .msg b { color: var(--text); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div id="panel" class="panel hidden"></div>
+<script>
+const COLORS = ["var(--c1)", "var(--c2)", "var(--c3)"];
+const panel = document.getElementById("panel");
+let last = null, lastMode = "", lastCounts = [];
+
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+function render(s) {
+  if (!s || s.state === "off") { panel.classList.add("hidden"); lastMode = "off"; return; }
+  panel.classList.remove("hidden");
+  const mode = (s.state === "vote" || s.state === "paused") ? "vote" : s.state;
+
+  if (mode === "vote") {
+    const key = s.options.map(o => o.name).join("|");
+    if (lastMode !== "vote" || panel.dataset.key !== key) {
+      panel.dataset.key = key; lastCounts = [];
+      panel.innerHTML = `
+        <div class="topbar"></div>
+        <div class="head"><div class="tag"><span class="live"></span>CHAT DECIDES</div><div class="timer" id="timer"></div></div>
+        <div class="track" id="track"><div id="bar"></div></div>
+        <div class="opts">${s.options.map((o, i) => `
+          <div class="opt" id="opt${i}">
+            <div class="fill" id="fill${i}" style="background:${COLORS[i % 3]}"></div>
+            <div class="badge" style="background:${COLORS[i % 3]}">${i + 1}</div>
+            <div class="info"><div class="name ${o.good ? "good" : ""}">${esc(o.name)}</div><div class="desc">${esc(o.desc)}</div></div>
+            <div class="nums"><div class="pct" id="pct${i}">0%</div><div class="cnt" id="cnt${i}">0 votes</div></div>
+          </div>`).join("")}
+        </div>
+        <div class="foot"><span>Type <b>1</b>, <b>2</b> or <b>3</b> in chat</span><span id="total">0 votes</span></div>`;
+    }
+    const paused = s.state === "paused";
+    const urgent = !paused && s.remaining <= 5;
+    document.getElementById("timer").textContent = paused ? "PAUSED" : Math.ceil(s.remaining) + "s";
+    document.getElementById("timer").classList.toggle("urgent", urgent);
+    document.getElementById("track").classList.toggle("urgent", urgent);
+    document.getElementById("bar").style.width = (s.duration > 0 ? Math.max(0, Math.min(1, s.remaining / s.duration)) * 100 : 0) + "%";
+    let lead = -1, best = 0;
+    s.options.forEach((o, i) => { if (o.count > best) { best = o.count; lead = i; } });
+    s.options.forEach((o, i) => {
+      const pct = s.total > 0 ? Math.round(100 * o.count / s.total) : 0;
+      document.getElementById("fill" + i).style.width = pct + "%";
+      const p = document.getElementById("pct" + i);
+      p.textContent = pct + "%";
+      document.getElementById("cnt" + i).textContent = o.count + (o.count === 1 ? " vote" : " votes");
+      document.getElementById("opt" + i).classList.toggle("lead", i === lead);
+      if (lastCounts[i] !== undefined && o.count > lastCounts[i]) { p.classList.remove("bump"); void p.offsetWidth; p.classList.add("bump"); }
+      lastCounts[i] = o.count;
+    });
+    document.getElementById("total").textContent = s.total + (s.total === 1 ? " vote" : " votes");
+  } else if (mode === "result") {
+    if (lastMode !== "result") {
+      const w = s.winner;
+      panel.innerHTML = `
+        <div class="topbar" style="background:${w.good ? "var(--good)" : ""}"></div>
+        <div class="result flash ${w.good ? "goodflash" : ""}">
+          <div class="k">CHAT HAS SPOKEN</div>
+          <div class="w" style="color:${w.good ? "var(--good)" : "var(--accent)"}">${esc(w.name)}</div>
+          <div class="d">${esc(w.desc)}</div>
+          <div class="v">${w.votes} of ${w.total} votes</div>
+        </div>`;
+    }
+  } else {
+    const txt = mode === "waiting" ? "Voting starts when the workday begins" : `Next vote in <b>${s.nextIn}s</b>`;
+    if (lastMode !== mode) {
+      panel.innerHTML = `<div class="topbar"></div><div class="idle"><div class="tag"><span class="live"></span>CHAT DECIDES</div><div class="msg" id="idlemsg"></div></div>`;
+    }
+    document.getElementById("idlemsg").innerHTML = txt;
+  }
+  lastMode = mode;
+}
+
+// Live updates from ChatBridge (Server-Sent Events). Hides itself if the game/bridge goes away.
+let lastSeen = 0;
+function connect() {
+  const es = new EventSource("/events");
+  es.onmessage = (e) => { lastSeen = Date.now(); try { last = JSON.parse(e.data); render(last); } catch (_) {} };
+  es.onerror = () => { es.close(); setTimeout(connect, 1500); };
+}
+setInterval(() => { if (Date.now() - lastSeen > 3000) render(null); }, 1000);
+if (new URLSearchParams(location.search).has("demo")) {
+  // ?demo shows a fake vote so you can position it in OBS
+  let t = 20, c = [3, 7, 1];
+  setInterval(() => {
+    t = t <= 0 ? 20 : t - 0.25; c[Math.floor(Math.random() * 3)] += Math.random() < .5 ? 1 : 0;
+    lastSeen = Date.now();
+    render({ state: "vote", remaining: t, duration: 20, total: c[0] + c[1] + c[2], nextIn: 0,
+      options: [{ name: "DRUNK", desc: "Everyone is wasted for 30s", good: false, count: c[0] },
+                { name: "JACKPOT", desc: "One lucky player wins $750", good: true, count: c[1] },
+                { name: "BANKRUPTCY", desc: "Team loses HALF its cash", good: false, count: c[2] }], winner: {} });
+  }, 250);
+} else connect();
+</script>
+</body>
+</html>
