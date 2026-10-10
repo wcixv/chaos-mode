@@ -280,9 +280,9 @@
     <h2>Install in a minute</h2>
     <p class="sub">Windows, Steam version of the playtest.</p>
     <ol class="steps">
-      <li>Download <b>ChaosMode-v1.0.zip</b> from the <a href="https://github.com/wcixv/chaos-mode/releases/latest" id="dl-steps">latest release</a>.</li>
+      <li>Download <b>ChaosMode-v1.1.zip</b> from the <a href="https://github.com/wcixv/chaos-mode/releases/latest" id="dl-steps">latest release</a>.</li>
       <li>In Steam, right-click the game and choose <b>Manage → Browse local files</b>.</li>
-      <li>Copy everything from the zip into that folder. <code>winhttp.dll</code> goes next to the game's exe.</li>
+      <li>Copy everything from the zip into that folder, except the <code>BepInEx-version</code> folder. <code>winhttp.dll</code> goes next to the game's exe.</li>
       <li>Host a <b>Friends Only</b> or <b>Invite Only</b> lobby and press <b>F2</b>. Chaos Mode is locked in public lobbies.</li>
     </ol>
   </section>
@@ -293,6 +293,7 @@
     <details><summary>The F2 menu says Locked</summary><p>You need to be the host, and the lobby has to be Friends Only or Invite Only.</p></details>
     <details><summary>Windows warns about ChatBridge</summary><p>It isn't code-signed. Click <b>More info</b>, then <b>Run anyway</b>.</p></details>
     <details><summary>TikTok won't connect</summary><p>Open TikFinity, log in, and turn on its Event API (port 21213). ChatBridge connects to it automatically.</p></details>
+    <details><summary>Can I use it with other BepInEx mods?</summary><p>Yes. The download also has a BepInEx version in a separate folder, with its own steps. It needs the community <a href="https://github.com/swyf-modding/Setup">Setup tool</a> first. Most people should use the normal install above.</p></details>
     <details><summary>How do I uninstall it?</summary><p>Delete <code>winhttp.dll</code> from the game folder. The game then runs without any mods.</p></details>
   </section>
 

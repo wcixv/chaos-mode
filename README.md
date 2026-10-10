@@ -31,12 +31,18 @@ A party/streamer mod for <i>Scam With Your Friends</i>: random events, chat vote
 
 ## Install
 
-1. Download **`ChaosMode-v1.0.zip`** from [Releases](../../releases/latest).
+1. Download **`ChaosMode-v1.1.zip`** from [Releases](../../releases/latest).
 2. In Steam: right-click the game → **Manage → Browse local files**.
-3. Copy **everything** from the zip into that folder (`winhttp.dll` sits next to the game's `.exe`).
+3. Copy **everything** from the zip except the `BepInEx-version` folder into that folder (`winhttp.dll` sits next to the game's `.exe`).
 4. Launch the game, host a **Friends Only** or **Invite Only** lobby and press **F2**.
 
 **Uninstall:** delete `winhttp.dll` from the game folder.
+
+### Using other mods? (BepInEx version, optional)
+
+The v1.1 zip also has a **BepInEx version** in `BepInEx-version/` for people who run other BepInEx mods. It's the same mod, started by BepInEx instead of the built-in loader. Most people should use the normal install above.
+
+BepInEx needs some fixed runtime files on this game, which the community [Setup tool](https://github.com/swyf-modding/Setup) installs for you. Read `BepInEx-version/README.txt` in the zip for the steps. Thanks to the swyf-modding folks for working this out.
 
 ## Events
 
