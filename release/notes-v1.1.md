@@ -2,7 +2,7 @@
 
 **Install:**
 1. Set up BepInEx once with the community [Setup tool](https://github.com/swyf-modding/Setup). It installs BepInEx and the fixed runtime files this game needs. The README has the exact command.
-2. Download `ChaosMode-v1.1.zip` and copy its `BepInEx` folder into the game folder (Steam → Manage → Browse local files). Copy `ChatBridge` too if you want YouTube, TikTok or Kick chat, or the OBS overlay.
+2. Download `ChaosMode-v1.1.zip` and copy its `BepInEx` folder into the game folder (Steam → Manage → Browse local files). Copy `ChatBridge` too: Creator Mode (chat votes) stays locked until it's installed.
 3. Host a Friends Only or Invite Only lobby and press **F2**.
 
 **Coming from v1.0?** Delete `winhttp.dll`, `doorstop_config.ini`, the `ModLoader` folder and `Mods\ChaosMode.dll` first.
