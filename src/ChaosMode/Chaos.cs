@@ -28,7 +28,7 @@ namespace ChaosMode
         private static readonly MethodInfo mFireLight = typeof(ScammerGameManager).GetMethod("ServerSetFireLightActive", Any);
         private static readonly MethodInfo mFiredFx = typeof(ScammerGameManager).GetMethod("RpcPlayFiredEffects", Any);
 
-        private struct Ev { public string name; public Func<string> run; public Func<bool> ok; }
+        private struct Ev { public string name; public Func<string> run; public Func<bool> ok; public bool hidden; }  // hidden = gift-only, never in votes/random/menu
         private List<Ev> events;
 
         public Chaos()
@@ -61,10 +61,16 @@ namespace ChaosMode
                 E("DOUBLE CASH", DoubleCash, () => doubleCashUntil < Time.unscaledTime),
                 E("BOSS ON BREAK", BossOnBreak, () => freezeClockUntil < Time.unscaledTime),
                 E("DOUBLE OR NOTHING", DoubleOrNothing, () => Gm.MoneyPoolLong >= 100),
+                // ---- gift-only (TikTok gifts via gifts.txt) ----
+                H("END DAY", EndDay, () => DayRunning() && Gm.CurrentDay > 0 && (Gm.IsSandboxMode || Gm.CurrentDay < 16)),
             };
+            Gifts.EventNames = () => events.Select(e => e.name);
+            Gifts.Describe = VoteOverlay.Describe;
+            try { Gifts.Path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), "ChatBridge\\gifts.txt"); } catch { }
         }
 
         private static Ev E(string n, Func<string> r, Func<bool> ok = null) => new Ev { name = n, run = r, ok = ok ?? (() => true) };
+        private static Ev H(string n, Func<string> r, Func<bool> ok = null) => new Ev { name = n, run = r, ok = ok ?? (() => true), hidden = true };
         private static ScammerGameManager Gm => ScammerGameManager.Instance;
 
         private static bool DayRunning()
@@ -83,6 +89,9 @@ namespace ChaosMode
         public readonly TwitchChat Twitch = new TwitchChat();
         public readonly BridgeChat Bridge = new BridgeChat();
         public readonly ChatVote Vote = new ChatVote();
+        public readonly GiftMap Gifts = new GiftMap();
+        private readonly Queue<GiftMsg> giftQueue = new Queue<GiftMsg>();
+        private float nextGiftAt;
         public string LastResult = "";
         public string LastWinner = ""; public int LastWinnerVotes, LastWinnerTotal; public float LastWinnerAt = -100f;
         private float nextVoteAt = -1f;
@@ -147,6 +156,8 @@ namespace ChaosMode
 
             var chat = Twitch.Drain();
             chat.AddRange(Bridge.Drain());
+            var gifts = Bridge.DrainGifts();
+            Gifts.Refresh(Time.unscaledTime);
             Bridge.KeepAlive(CreatorMode);
             if (Bridge.Connected && Time.unscaledTime >= nextPublish)
             {
@@ -154,7 +165,15 @@ namespace ChaosMode
                 try { Bridge.SendLine("#vote\t" + StateJson()); } catch (Exception e) { Loader.Log("Publish failed: " + e.Message); }
             }
 
-            if (!allowed) { Enabled = false; CreatorMode = false; Vote.Active = false; nextAt = -1f; return; }
+            if (!allowed) { Enabled = false; CreatorMode = false; Vote.Active = false; nextAt = -1f; giftQueue.Clear(); return; }
+
+            // TikTok gifts fire their event (one every couple of seconds so a gift storm doesn't stack up)
+            if (CreatorMode)
+            {
+                foreach (var g in gifts) if (giftQueue.Count < 30) giftQueue.Enqueue(g);
+                if (giftQueue.Count > 0 && Time.unscaledTime >= nextGiftAt) RunGift(giftQueue.Dequeue());
+            }
+            else giftQueue.Clear();
 
             // ----- Creator Mode: chat votes back-to-back, replaces the normal timer -----
             if (CreatorMode)
@@ -237,6 +256,16 @@ namespace ChaosMode
             return sb.Append('"').ToString();
         }
 
+        private void RunGift(GiftMsg g)
+        {
+            string ev = Gifts.Match(g.Name, g.Diamonds);
+            Loader.Log("Gift: " + g.User + " sent " + g.Name + " x" + g.Count + " (" + g.Diamonds + " diamonds) -> " + (ev ?? "no rule"));
+            if (ev == null) return;
+            if (!DayRunning()) { Show("Gift from " + g.User + " arrived between days - no effect."); return; }
+            nextGiftAt = Time.unscaledTime + 2f;
+            Trigger(ev, " (" + g.User + " sent " + g.Name + ")");
+        }
+
         public void StartVote()
         {
             var pool = Available().OrderBy(_ => rng.Next()).Take(3).Select(e => e.name).ToArray();
@@ -245,10 +274,10 @@ namespace ChaosMode
             Loader.Log("Vote started: " + string.Join(" / ", pool));
         }
 
-        public IEnumerable<string> EventNames => events.Select(e => e.name);
+        public IEnumerable<string> EventNames => events.Where(e => !e.hidden).Select(e => e.name);
         public void TriggerByName(string name) { if (DayRunning()) Trigger(name, " (manual)"); else Show("Start the workday first."); }
 
-        private List<Ev> Available() => events.Where(e => { try { return e.ok(); } catch { return false; } }).ToList();
+        private List<Ev> Available() => events.Where(e => { try { return !e.hidden && e.ok(); } catch { return false; } }).ToList();
 
         private void Trigger(string name, string suffix)
         {
@@ -266,7 +295,7 @@ namespace ChaosMode
         public void TriggerRandom()
         {
             if (!DayRunning()) { Show("Chaos waits for the workday to start..."); return; }
-            var pool = events.Where(e => { try { return e.ok(); } catch { return false; } }).ToList();
+            var pool = events.Where(e => { try { return !e.hidden && e.ok(); } catch { return false; } }).ToList();
             if (pool.Count == 0) return;
             var ev = pool[rng.Next(pool.Count)];
             string detail;
@@ -417,6 +446,12 @@ namespace ChaosMode
         {
             foreach (var r in Ragdolls()) TryRagdoll(r, 3f, true);
             return "Everyone got tased!";
+        }
+
+        private string EndDay()
+        {
+            Gm.ServerEndCurrentDayEarly();
+            return "The day is over - clocking out early!";
         }
 
         private string Drunk()

@@ -52,6 +52,16 @@ function chat(platform, user, message) {
   if (/^#?[1-9]$/.test(message.trim())) log(platform, `${user} voted ${message.trim()}`);
 }
 
+// Gifts (TikTok): forwarded to the mod, which maps them to events using ChatBridge\gifts.txt.
+function gift(platform, user, name, diamonds, count) {
+  if (!name) return;
+  const clean = (x) => String(x == null ? "" : x).replace(/[\t\r\n]+/g, " ").trim();
+  count = Math.max(1, Number(count) || 1);
+  diamonds = Math.max(0, Math.round(Number(diamonds) || 0));
+  log(platform, `${clean(user) || "someone"} sent ${clean(name)} x${count} (${diamonds} diamonds)`);
+  sendToGame(`#gift\t${platform}\t${clean(user) || "someone"}\t${clean(name)}\t${diamonds}\t${count}`);
+}
+
 let gameCount = 0;
 function sendGameState() { sendToGame("#game\t" + gameCount); }
 const server = net.createServer((sock) => {
@@ -150,6 +160,12 @@ function startTikTok(user, apiKey) {
   const connect = () => {
     const conn = new TikTokLiveConnection(user, apiKey ? { signApiKey: apiKey } : {});
     conn.on(WebcastEvent.CHAT, (d) => chat("tiktok", d.user && (d.user.uniqueId || d.user.userId), d.comment));
+    conn.on(WebcastEvent.GIFT, (d) => {
+      const g = d.giftDetails || {};
+      if (g.giftType === 1 && d.repeatEnd === false) return; // combo still running
+      const count = d.repeatCount || 1;
+      gift("tiktok", d.user && (d.user.uniqueId || d.user.userId), g.giftName || d.giftName, Number(g.diamondCount || d.diamondCount || 0) * count, count);
+    });
     conn.on(ControlEvent.DISCONNECTED, () => { setStatus("TikTok", "disconnected, retrying in 20s"); setTimeout(connect, 20000); });
     setStatus("TikTok", "connecting...");
     conn.connect()
@@ -167,7 +183,7 @@ function startTikTok(user, apiKey) {
 // TikFinity Desktop exposes a local Event API websocket (default ws://localhost:21213/).
 function startTikFinity(url) {
   const WebSocket = require("ws");
-  let announced = false;
+  let announced = false, gotGift = false;
   const seen = new Set();
   const connect = () => {
     const ws = new WebSocket(url);
@@ -177,8 +193,18 @@ function startTikFinity(url) {
       const ev = String(m.event || m.type || m.eventType || "");
       const d = m.data || m.payload || m;
       if (!seen.has(ev) && seen.size < 30) { seen.add(ev); log("TikTok", "TikFinity event type: " + (ev || "(none)")); }
-      if (!/chat|comment/i.test(ev)) return;
       const u = d.user || {};
+      if (/gift/i.test(ev)) {
+        if (!gotGift) { gotGift = true; log("TikTok", "first gift payload: " + JSON.stringify(d).slice(0, 300)); }
+        const g = d.giftDetails || d.gift || {};
+        // a gift streak (combo) is still running: wait for its final message so one combo fires once
+        if ((d.giftType === 1 || g.giftType === 1) && d.repeatEnd === false) return;
+        const count = d.repeatCount || d.count || d.amount || 1;
+        const each = d.diamondCount != null ? d.diamondCount : (g.diamondCount != null ? g.diamondCount : (d.diamonds != null ? d.diamonds : 0));
+        gift("tiktok", d.uniqueId || u.uniqueId || d.nickname || u.nickname, d.giftName || g.giftName || g.name || d.name, Number(each) * Number(count), count);
+        return;
+      }
+      if (!/chat|comment/i.test(ev)) return;
       const user = d.uniqueId || u.uniqueId || d.userId || u.userId || d.nickname || u.nickname;
       const text = d.comment != null ? d.comment : (d.text != null ? d.text : d.message);
       if (text == null) return;

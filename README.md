@@ -25,6 +25,7 @@ A party/streamer mod for <i>Scam With Your Friends</i>: random events, chat vote
 - **24 chaos events.** 16 punishments, 8 rewards, from getting tased to doubling every dollar you scam.
 - **Chat decides.** Viewers type `1`, `2` or `3` to pick the next event. Votes run back-to-back.
 - **Every platform.** Twitch is built in; YouTube, TikTok (via TikFinity) and Kick go through the ChatBridge app.
+- **TikTok gifts.** Map gifts to events yourself. A Galaxy can end the day early, a Rose can rain money. See [TikTok gifts](#tiktok-gifts).
 - **OBS overlay.** An animated vote widget you add as a Browser Source.
 - **Friends don't need the mod.** Everything runs on the host and syncs through the game's own networking.
 - **Private lobbies only.** Chaos Mode only works when you host a Friends Only or Invite Only lobby.
@@ -43,9 +44,9 @@ powershell -ExecutionPolicy Bypass -File .\setup.ps1 -GameDir "C:\...\steamapps\
 
 **2. Install Chaos Mode**
 
-1. Download **`ChaosMode-v1.1.zip`** and **`ChatBridge-v1.1.zip`** from [Releases](../../releases/latest).
+1. Download **`ChaosMode-v1.2.zip`** and **`ChatBridge-v1.2.zip`** from [Releases](../../releases/latest).
 2. In Steam: right-click the game → **Manage → Browse local files**.
-3. Put **`ChaosMode.dll`** (from `ChaosMode-v1.1.zip`) in the **`BepInEx\plugins`** folder. Extract **`ChatBridge-v1.1.zip`** into the game folder so you have `ChatBridge\ChatBridge.exe`. Creator Mode (chat votes) stays locked until ChatBridge is installed.
+3. Put **`ChaosMode.dll`** (from `ChaosMode-v1.2.zip`) in the **`BepInEx\plugins`** folder. Extract **`ChatBridge-v1.2.zip`** into the game folder so you have `ChatBridge\ChatBridge.exe`. Creator Mode (chat votes) stays locked until ChatBridge is installed.
 4. Launch the game, host a **Friends Only** or **Invite Only** lobby and press **F2**.
 
 **Coming from v1.0?** Delete `winhttp.dll`, `doorstop_config.ini`, the `ModLoader` folder and `Mods\ChaosMode.dll` from the game folder before step 1. The Setup tool leaves existing copies alone, and the old ones point at the v1.0 loader.
@@ -82,6 +83,24 @@ Without Creator Mode, a random event fires every 30, 60 or 120 seconds. The F2 m
 3. **YouTube / TikTok / Kick:** open `ChatBridge\ChatBridge.exe`, fill in your channels and press **START**.
    - TikTok uses **[TikFinity](https://tikfinity.com/)**. Keep it open and turn on its Event API.
 4. Chat types **1**, **2** or **3**. The winner fires, then the next vote starts.
+
+### TikTok gifts
+
+With Creator Mode on and ChatBridge connected to TikTok through TikFinity, gifts can fire events. The first time you run it, Chaos Mode creates **`ChatBridge\gifts.txt`** in the game folder. Edit it any time, no restart needed:
+
+```
+Rose = MONEY RAIN
+Finger Heart = DRUNK
+Galaxy = END DAY
+>= 5000 = JACKPOT
+Doughnut = none
+```
+
+- `Gift name = EVENT` picks an event for one gift. Names are what TikTok calls them and aren't case sensitive.
+- `>= 500 = EVENT` fires for any gift worth at least 500 diamonds. The biggest matching rule wins, and a gift's name rule beats it.
+- `= none` turns a gift off.
+- **`END DAY`** is a gift-only event that ends the workday right now. Any of the 24 regular events works too. The file lists them all.
+- A gift combo fires once, when it ends. Gifts that arrive between days do nothing, and a gift storm is spaced out to one event every two seconds.
 
 ### OBS overlay
 

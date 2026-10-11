@@ -3,7 +3,7 @@
 # Creator Mode in Chaos Mode stays locked until it is installed.
 #
 # What this script does, and nothing else:
-#   1. Downloads ChatBridge-v1.1.zip from the Chaos Mode GitHub release (https://github.com/wcixv/chaos-mode/releases/tag/v1.1)
+#   1. Downloads ChatBridge-v1.2.zip from the Chaos Mode GitHub release (https://github.com/wcixv/chaos-mode/releases/tag/v1.2)
 #   2. Checks the file against the SHA-256 below and stops if it doesn't match
 #   3. Extracts it to <game folder>\ChatBridge (your chatbridge.json settings are kept)
 param(
@@ -12,8 +12,8 @@ param(
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$url  = 'https://github.com/wcixv/chaos-mode/releases/download/v1.1/ChatBridge-v1.1.zip'
-$hash = '8dc36c3fc9e3b9e50862d9be23759bfb18d3b504978baa60d2d26ade7657745a'
+$url  = 'https://github.com/wcixv/chaos-mode/releases/download/v1.2/ChatBridge-v1.2.zip'
+$hash = '5881089a94e57a51dd819ea0cac4d5558330730037efc20a38ad96eaafeef841'
 
 if (-not (Test-Path -LiteralPath $GameDir -PathType Container)) { throw "Game folder not found: $GameDir" }
 

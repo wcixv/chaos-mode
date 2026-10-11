@@ -201,6 +201,7 @@ namespace ChaosMode
                 GUILayout.Label("  " + chaos.Twitch.Status);
                 GUILayout.Label("YouTube / TikTok / Kick:");
                 GUILayout.Label("  " + (chaos.CreatorMode ? chaos.Bridge.Status : "(turn on Creator Mode)"));
+                GUILayout.Label("TikTok gifts: " + (chaos.CreatorMode ? chaos.Gifts.Summary : "(turn on Creator Mode)"));
                 if (chaos.CreatorMode && !chaos.Vote.Active && ui.Button("Start next vote now")) chaos.StartVote();
             }
             GUILayout.Label("<size=10>16 punishments, 8 rewards. Friends don't need the mod.</size>");

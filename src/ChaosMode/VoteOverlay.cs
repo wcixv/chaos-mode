@@ -32,6 +32,7 @@ namespace ChaosMode
             { "MONEY RAIN", "Everyone gets $150" },
             { "JACKPOT", "One lucky player wins $750" },
             { "OVERTIME", "+60 seconds on the clock" },
+            { "END DAY", "The workday ends right now" },
         };
         public static readonly HashSet<string> Good = new HashSet<string> { "MONEY RAIN", "JACKPOT", "OVERTIME", "PAYDAY", "QUOTA CUT", "DOUBLE CASH", "BOSS ON BREAK" };
 

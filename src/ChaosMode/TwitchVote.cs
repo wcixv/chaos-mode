@@ -177,6 +177,7 @@ namespace ChaosMode
         private volatile bool want;
         private readonly Queue<KeyValuePair<string, string>> inbox = new Queue<KeyValuePair<string, string>>();
         private readonly object gate = new object();
+        private readonly Queue<GiftMsg> giftInbox = new Queue<GiftMsg>();
         private NetworkStream current;
         private readonly object sendGate = new object();
 
@@ -214,6 +215,16 @@ namespace ChaosMode
             }
         }
 
+        public List<GiftMsg> DrainGifts()
+        {
+            lock (gate)
+            {
+                var list = new List<GiftMsg>(giftInbox);
+                giftInbox.Clear();
+                return list;
+            }
+        }
+
         private void Run()
         {
             while (want)
@@ -242,6 +253,16 @@ namespace ChaosMode
                             all = all.Substring(nl + 1);
                             var parts = line.Split('\t');
                             if (parts.Length >= 2 && parts[0] == "#status") { Status = "ChatBridge: " + parts[1]; continue; }
+                            if (parts[0] == "#gift" && parts.Length >= 6)
+                            {
+                                int dia, cnt; int.TryParse(parts[4], out dia); int.TryParse(parts[5], out cnt);
+                                lock (gate)
+                                {
+                                    if (giftInbox.Count < 200)
+                                        giftInbox.Enqueue(new GiftMsg { Platform = parts[1], User = parts[2], Name = parts[3], Diamonds = dia, Count = cnt < 1 ? 1 : cnt });
+                                }
+                                continue;
+                            }
                             if (parts.Length < 3) continue;
                             lock (gate)
                             {
