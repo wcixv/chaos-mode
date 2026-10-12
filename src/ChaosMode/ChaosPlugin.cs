@@ -39,7 +39,9 @@ namespace ChaosMode
             gui.owner = this;
             gui.enabled = false;
             Loader.Log("Chaos Mode ready. Press F2 in game.");
-            try { if (File.Exists(CfgPath)) channelInput = File.ReadAllText(CfgPath).Trim(); } catch { }
+            string legacy = "";
+            try { if (File.Exists(CfgPath)) legacy = File.ReadAllText(CfgPath).Trim(); } catch { }
+            channelInput = Settings.Load(chaos, legacy);
         }
 
         // hostLobbyMode: 0 = Public, 1 = Invite Only, 2 = Friends Only
@@ -72,6 +74,7 @@ namespace ChaosMode
             try
             {
                 while (deferred.Count > 0) deferred.Dequeue()();
+                Settings.SaveIfChanged(chaos, channelInput);
                 ApplyGiftAction();
                 var kb = UnityEngine.InputSystem.Keyboard.current;
                 if (kb != null && kb.f2Key.wasPressedThisFrame) showMenu = !showMenu;

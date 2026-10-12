@@ -1,4 +1,4 @@
-// TikTok gifts -> Chaos events. Creators edit <game>\ChatBridge\gifts.txt; changes are picked up while the game runs.
+// TikTok gifts -> Chaos events. Rules live in <game>\BepInEx\config\ChaosMode\gifts.txt (the F2 menu edits it; so can you); changes are picked up while the game runs.
 //
 // Line format (one rule per line, # starts a comment):
 //     Galaxy = END DAY          a gift by name (not case sensitive)
@@ -38,6 +38,7 @@ namespace ChaosMode
         private readonly HashSet<string> warned = new HashSet<string>();
 
         public string Path = "";
+        public string OldPath = "";   // v1.2 kept the rules in ChatBridge\gifts.txt; copied over once
         public int Rules => rules.Count;
 
         // Every event name, so rules can be checked and given their proper spelling.
@@ -48,8 +49,8 @@ namespace ChaosMode
         {
             get
             {
-                if (Path == "" || !File.Exists(Path)) return "no gifts.txt yet";
-                return Rules + " gift rule" + (Rules == 1 ? "" : "s") + " loaded (ChatBridge\\gifts.txt)";
+                if (Path == "" || !File.Exists(Path)) return "no rules saved yet";
+                return Rules + " gift rule" + (Rules == 1 ? "" : "s") + " saved";
             }
         }
 
@@ -63,8 +64,9 @@ namespace ChaosMode
                 if (Path == "") return;
                 if (!File.Exists(Path))
                 {
-                    if (!Directory.Exists(System.IO.Path.GetDirectoryName(Path))) return;
-                    File.WriteAllText(Path, DefaultFile());
+                    Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path));
+                    if (OldPath != "" && File.Exists(OldPath)) File.WriteAllText(Path, File.ReadAllText(OldPath));
+                    else File.WriteAllText(Path, DefaultFile());
                 }
                 var stamp = File.GetLastWriteTimeUtc(Path);
                 if (stamp == loadedStamp) return;

@@ -86,7 +86,7 @@ Without Creator Mode, a random event fires every 30, 60 or 120 seconds. The F2 m
 
 ### TikTok gifts
 
-With Creator Mode on and ChatBridge connected to TikTok through TikFinity, gifts can fire events. Set the rules in the **F2 menu**, on the **TikTok Gifts** tab: type a gift name (or a diamond amount like `500`), pick an event with `<` `>` and press **Add this rule**. Change an existing rule with its `<` `>` buttons, or press **Delete**. Rules are saved in **`ChatBridge\gifts.txt`** in the game folder, which Chaos Mode creates the first time you run it. You can also edit that file by hand any time, no restart needed (the menu keeps your comments):
+With Creator Mode on and ChatBridge connected to TikTok through TikFinity, gifts can fire events. Set the rules in the **F2 menu**, on the **TikTok Gifts** tab: type a gift name (or a diamond amount like `500`), pick an event with `<` `>` and press **Add this rule**. Change an existing rule with its `<` `>` buttons, or press **Delete**. Rules are saved in **`BepInEx\config\ChaosMode\gifts.txt`** in the game folder, in the game folder. They stay saved between games and through updates, so you only set them up once. You can also edit that file by hand any time, no restart needed (the menu keeps your comments):
 
 ```
 Rose = MONEY RAIN
@@ -105,6 +105,10 @@ Doughnut = none
 ### OBS overlay
 
 In ChatBridge, click **Copy** next to *OBS overlay*. In OBS, add a **Browser** source with that URL at **480 × 420**. Click **Preview** in ChatBridge to see a demo vote while you position it. Turn off *Show vote box in game* in the F2 menu so viewers don't see the vote twice.
+
+## Your settings are remembered
+
+Chaos Mode saves your timer, vote length, vote-box setting, Twitch channel and gift rules in `BepInEx\config\ChaosMode\` (`settings.txt` and `gifts.txt`). That folder is separate from the plugin and ChatBridge, so updating or reinstalling either one keeps everything. To back up your setup or move it to another PC, copy that folder.
 
 ## Troubleshooting
 

@@ -270,7 +270,7 @@
         <h3 style="margin-top:0">ChatBridge</h3>
         <p>A small Windows app that reads your stream chat and sends the votes into the game. Fill in your channels, press Start, and watch the lights go green.</p>
         <h3>TikTok gifts</h3>
-        <p>Let gifts trigger events. A Galaxy can end the workday on the spot, a Rose can rain money, and you decide the rest yourself, in the F2 menu or in a plain text file, <code>ChatBridge\gifts.txt</code>.</p>
+        <p>Let gifts trigger events. A Galaxy can end the workday on the spot, a Rose can rain money, and you decide the rest yourself, in the F2 menu or in a plain text file, <code>BepInEx\config\ChaosMode\gifts.txt</code>.</p>
         <h3>OBS overlay</h3>
         <p>ChatBridge also serves the vote widget as a Browser Source. Copy the link, add it in OBS at 480 × 420, and turn off the in-game vote box so viewers only see it once.</p>
       </div>
@@ -294,9 +294,10 @@
     <details><summary>Tased, Launch or Knockout do nothing</summary><p>Turn off <b>Ragdoll Immunity</b> in the game's settings. It blocks every knock-down effect.</p></details>
     <details><summary>The F2 menu says Locked</summary><p>You need to be the host, and the lobby has to be Friends Only or Invite Only.</p></details>
     <details><summary>Windows warns about ChatBridge</summary><p>It isn't code-signed. Click <b>More info</b>, then <b>Run anyway</b>.</p></details>
-    <details><summary>How do I choose which gift does what?</summary><p>Press F2 and open the <b>TikTok Gifts</b> tab: type a gift name, pick an event and press Add this rule. Or open <code>ChatBridge\gifts.txt</code> in the game folder, write one rule per line like <code>Galaxy = END DAY</code>, and save. It reloads while the game runs, and the file lists every event you can use.</p></details>
+    <details><summary>How do I choose which gift does what?</summary><p>Press F2 and open the <b>TikTok Gifts</b> tab: type a gift name, pick an event and press Add this rule. Or open <code>BepInEx\config\ChaosMode\gifts.txt</code> in the game folder, write one rule per line like <code>Galaxy = END DAY</code>, and save. It reloads while the game runs, and the file lists every event you can use.</p></details>
     <details><summary>TikTok won't connect</summary><p>Open TikFinity, log in, and turn on its Event API (port 21213). ChatBridge connects to it automatically.</p></details>
     <details><summary>I have v1.0 installed</summary><p>Delete <code>winhttp.dll</code>, <code>doorstop_config.ini</code>, the <code>ModLoader</code> folder and <code>Mods\ChaosMode.dll</code> from the game folder, then follow the install steps above. The Setup tool leaves old copies alone, and the old ones point at the v1.0 loader.</p></details>
+    <details><summary>Do I have to set it up again after an update?</summary><p>No. Your timer, vote length, Twitch channel and gift rules are saved in <code>BepInEx\config\ChaosMode</code>, separate from the plugin and ChatBridge. Copy that folder to move your setup to another PC.</p></details>
     <details><summary>How do I uninstall it?</summary><p>Delete <code>ChaosMode.dll</code> from <code>BepInEx\plugins</code>, and the <code>ChatBridge</code> folder if you want it gone too.</p></details>
   </section>
 

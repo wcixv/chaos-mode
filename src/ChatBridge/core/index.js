@@ -52,7 +52,7 @@ function chat(platform, user, message) {
   if (/^#?[1-9]$/.test(message.trim())) log(platform, `${user} voted ${message.trim()}`);
 }
 
-// Gifts (TikTok): forwarded to the mod, which maps them to events using ChatBridge\gifts.txt.
+// Gifts (TikTok): forwarded to the mod, which maps them to events using BepInEx\config\ChaosMode\gifts.txt.
 function gift(platform, user, name, diamonds, count) {
   if (!name) return;
   const clean = (x) => String(x == null ? "" : x).replace(/[\t\r\n]+/g, " ").trim();

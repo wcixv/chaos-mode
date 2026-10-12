@@ -66,7 +66,7 @@ namespace ChaosMode
             };
             Gifts.EventNames = () => events.Select(e => e.name);
             Gifts.Describe = VoteOverlay.Describe;
-            try { Gifts.Path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), "ChatBridge\\gifts.txt"); } catch { }
+            try { Gifts.Path = Settings.GiftsFile; Gifts.OldPath = Settings.OldGiftsFile; } catch { }
         }
 
         private static Ev E(string n, Func<string> r, Func<bool> ok = null) => new Ev { name = n, run = r, ok = ok ?? (() => true) };
