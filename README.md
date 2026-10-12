@@ -86,7 +86,7 @@ Without Creator Mode, a random event fires every 30, 60 or 120 seconds. The F2 m
 
 ### TikTok gifts
 
-With Creator Mode on and ChatBridge connected to TikTok through TikFinity, gifts can fire events. The first time you run it, Chaos Mode creates **`ChatBridge\gifts.txt`** in the game folder. Edit it any time, no restart needed:
+With Creator Mode on and ChatBridge connected to TikTok through TikFinity, gifts can fire events. Set the rules in the **F2 menu**: turn on **Edit gift rules**, type a gift name (or a diamond amount like `500`), pick an event with `<` `>` and press **Add rule**. Change an existing rule with its `<` `>` buttons, or delete it with **X**. Rules are saved in **`ChatBridge\gifts.txt`** in the game folder, which Chaos Mode creates the first time you run it. You can also edit that file by hand any time, no restart needed (the menu keeps your comments):
 
 ```
 Rose = MONEY RAIN

@@ -18,6 +18,17 @@ namespace ChaosMode
         private Rect window = new Rect(440, 40, 340, 0);
         private GUIStyle bannerStyle, voteStyle;
         private string channelInput = "";
+        // gift rule editor (actions are queued and applied in Update so the menu layout never changes mid-draw)
+        private bool showGifts;
+        private string giftKey = "", giftMsg = "";
+        private int giftNewEv = 1;                       // index in the list below; 0 = (off)
+        private int giftActKind, giftActLine, giftActDir; // 1 = change event, 2 = remove, 3 = add
+        private System.Collections.Generic.List<string> GiftChoices()
+        {
+            var l = new System.Collections.Generic.List<string> { "(off)" };
+            foreach (var n in chaos.Gifts.EventNames()) l.Add(n);
+            return l;
+        }
         private static string CfgPath => Path.Combine(Path.GetDirectoryName(typeof(Loader).Assembly.Location), "ChaosMode.cfg");
 
         private void Awake()
@@ -58,6 +69,7 @@ namespace ChaosMode
         {
             try
             {
+                ApplyGiftAction();
                 var kb = UnityEngine.InputSystem.Keyboard.current;
                 if (kb != null && kb.f2Key.wasPressedThisFrame) showMenu = !showMenu;
                 ui.Poll(showMenu);
@@ -73,6 +85,55 @@ namespace ChaosMode
                 chaos.Tick(LockReason() == null);
             }
             catch (Exception e) { Loader.Log("Update error: " + e); }
+        }
+
+        private void ApplyGiftAction()
+        {
+            if (giftActKind == 0) return;
+            int kind = giftActKind; giftActKind = 0;
+            var choices = GiftChoices();
+            if (kind == 1)
+            {
+                var rule = chaos.Gifts.RuleList.Find(r => r.Line == giftActLine);
+                int i = rule.Event == null ? 0 : Mathf.Max(0, choices.IndexOf(rule.Event));
+                i = ((i + giftActDir) % choices.Count + choices.Count) % choices.Count;
+                chaos.Gifts.SetRuleAt(giftActLine, i == 0 ? null : choices[i]);
+            }
+            else if (kind == 2) chaos.Gifts.RemoveRuleAt(giftActLine);
+            else if (kind == 3)
+            {
+                string ev = giftNewEv <= 0 || giftNewEv >= choices.Count ? null : choices[giftNewEv];
+                if (chaos.Gifts.AddRule(giftKey, ev)) { giftMsg = "Saved: " + GiftMap.NormalizeKey(giftKey) + " = " + (ev ?? "off"); giftKey = ""; }
+                else giftMsg = chaos.Gifts.LastError;
+            }
+            if (kind != 3 && chaos.Gifts.LastError != "") giftMsg = chaos.Gifts.LastError;
+        }
+
+        private void DrawGiftEditor()
+        {
+            var choices = GiftChoices();
+            GUILayout.Label("Gift  ->  event   (use < > to change it, X to delete)");
+            if (chaos.Gifts.RuleList.Count == 0) GUILayout.Label("  No rules yet. Add one below.");
+            foreach (var r in chaos.Gifts.RuleList)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(r.Key, GUILayout.Width(110));
+                if (ui.Button("<", GUILayout.Width(26))) { giftActKind = 1; giftActLine = r.Line; giftActDir = -1; }
+                GUILayout.Label(r.Event ?? "(off)", GUILayout.Width(130));
+                if (ui.Button(">", GUILayout.Width(26))) { giftActKind = 1; giftActLine = r.Line; giftActDir = 1; }
+                if (ui.Button("X", GUILayout.Width(26))) { giftActKind = 2; giftActLine = r.Line; }
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.Space(4);
+            GUILayout.Label("Add a rule: type the gift's name (Rose, Galaxy...), or a diamond amount like 500 for \"this much or more\".");
+            giftKey = ui.TextField("giftkey", giftKey, 40);
+            GUILayout.BeginHorizontal();
+            if (ui.Button("<", GUILayout.Width(26))) giftNewEv = (giftNewEv - 1 + choices.Count) % choices.Count;
+            GUILayout.Label(giftNewEv >= 0 && giftNewEv < choices.Count ? choices[giftNewEv] : "(off)", GUILayout.Width(150));
+            if (ui.Button(">", GUILayout.Width(26))) giftNewEv = (giftNewEv + 1) % choices.Count;
+            if (ui.Button("Add rule")) giftActKind = 3;
+            GUILayout.EndHorizontal();
+            if (giftMsg != "") GUILayout.Label("  " + giftMsg);
         }
 
         private void OnDestroy() { chaos.Twitch.Disconnect(); chaos.Bridge.KeepAlive(false); }
@@ -202,6 +263,8 @@ namespace ChaosMode
                 GUILayout.Label("YouTube / TikTok / Kick:");
                 GUILayout.Label("  " + (chaos.CreatorMode ? chaos.Bridge.Status : "(turn on Creator Mode)"));
                 GUILayout.Label("TikTok gifts: " + (chaos.CreatorMode ? chaos.Gifts.Summary : "(turn on Creator Mode)"));
+                if (ChatBridgeInstalled()) showGifts = ui.Toggle(showGifts, "Edit gift rules");
+                if (showGifts && ChatBridgeInstalled()) DrawGiftEditor();
                 if (chaos.CreatorMode && !chaos.Vote.Active && ui.Button("Start next vote now")) chaos.StartVote();
             }
             GUILayout.Label("<size=10>16 punishments, 8 rewards. Friends don't need the mod.</size>");
