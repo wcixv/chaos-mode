@@ -78,7 +78,7 @@ Without Creator Mode, a random event fires every 30, 60 or 120 seconds. The F2 m
 
 ## Creator Mode (chat votes)
 
-1. Make sure the `ChatBridge` folder is in the game folder (Creator Mode is locked without it), press **F2** and turn on **Creator Mode**.
+1. Make sure the `ChatBridge` folder is in the game folder (Creator Mode is locked without it), press **F2**, open the **Stream** tab and turn on **Chat votes** (Creator Mode).
 2. **Twitch:** type your channel in the F2 menu and press **Connect**.
 3. **YouTube / TikTok / Kick:** open `ChatBridge\ChatBridge.exe`, fill in your channels and press **START**.
    - TikTok uses **[TikFinity](https://tikfinity.com/)**. Keep it open and turn on its Event API.
@@ -86,7 +86,7 @@ Without Creator Mode, a random event fires every 30, 60 or 120 seconds. The F2 m
 
 ### TikTok gifts
 
-With Creator Mode on and ChatBridge connected to TikTok through TikFinity, gifts can fire events. Set the rules in the **F2 menu**: turn on **Edit gift rules**, type a gift name (or a diamond amount like `500`), pick an event with `<` `>` and press **Add rule**. Change an existing rule with its `<` `>` buttons, or delete it with **X**. Rules are saved in **`ChatBridge\gifts.txt`** in the game folder, which Chaos Mode creates the first time you run it. You can also edit that file by hand any time, no restart needed (the menu keeps your comments):
+With Creator Mode on and ChatBridge connected to TikTok through TikFinity, gifts can fire events. Set the rules in the **F2 menu**, on the **TikTok Gifts** tab: type a gift name (or a diamond amount like `500`), pick an event with `<` `>` and press **Add this rule**. Change an existing rule with its `<` `>` buttons, or press **Delete**. Rules are saved in **`ChatBridge\gifts.txt`** in the game folder, which Chaos Mode creates the first time you run it. You can also edit that file by hand any time, no restart needed (the menu keeps your comments):
 
 ```
 Rose = MONEY RAIN

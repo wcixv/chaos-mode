@@ -19,7 +19,9 @@ namespace ChaosMode
         private GUIStyle bannerStyle, voteStyle;
         private string channelInput = "";
         // gift rule editor (actions are queued and applied in Update so the menu layout never changes mid-draw)
-        private bool showGifts;
+        private int tab;                       // 0 = Chaos, 1 = Stream, 2 = TikTok gifts
+        private readonly System.Collections.Generic.Queue<Action> deferred = new System.Collections.Generic.Queue<Action>();
+        private void Later(Action a) { deferred.Enqueue(a); }  // menu clicks change state next frame, so the layout never changes mid-draw
         private string giftKey = "", giftMsg = "";
         private int giftNewEv = 1;                       // index in the list below; 0 = (off)
         private int giftActKind, giftActLine, giftActDir; // 1 = change event, 2 = remove, 3 = add
@@ -69,6 +71,7 @@ namespace ChaosMode
         {
             try
             {
+                while (deferred.Count > 0) deferred.Dequeue()();
                 ApplyGiftAction();
                 var kb = UnityEngine.InputSystem.Keyboard.current;
                 if (kb != null && kb.f2Key.wasPressedThisFrame) showMenu = !showMenu;
@@ -112,28 +115,149 @@ namespace ChaosMode
         private void DrawGiftEditor()
         {
             var choices = GiftChoices();
-            GUILayout.Label("Gift  ->  event   (use < > to change it, X to delete)");
-            if (chaos.Gifts.RuleList.Count == 0) GUILayout.Label("  No rules yet. Add one below.");
+            Say("Gift  ->  what happens", Dim);
+            if (chaos.Gifts.RuleList.Count == 0) Say("  No rules yet. Add one below.", Dim);
             foreach (var r in chaos.Gifts.RuleList)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(r.Key, GUILayout.Width(110));
+                GUILayout.Label(r.Key, GUILayout.Width(105));
                 if (ui.Button("<", GUILayout.Width(26))) { giftActKind = 1; giftActLine = r.Line; giftActDir = -1; }
-                GUILayout.Label(r.Event ?? "(off)", GUILayout.Width(130));
+                GUILayout.Label(Nice(r.Event), GUILayout.Width(125));
                 if (ui.Button(">", GUILayout.Width(26))) { giftActKind = 1; giftActLine = r.Line; giftActDir = 1; }
-                if (ui.Button("X", GUILayout.Width(26))) { giftActKind = 2; giftActLine = r.Line; }
+                if (ui.Button("Delete", GUILayout.Width(60))) { giftActKind = 2; giftActLine = r.Line; }
                 GUILayout.EndHorizontal();
             }
-            GUILayout.Space(4);
-            GUILayout.Label("Add a rule: type the gift's name (Rose, Galaxy...), or a diamond amount like 500 for \"this much or more\".");
+            GUILayout.Space(8);
+            Say("<b>Add a new gift rule</b>");
+            Say("1. Type the gift's name (like Rose or Galaxy). Or type a number, like 500, to mean any gift worth that many diamonds or more.", Dim);
             giftKey = ui.TextField("giftkey", giftKey, 40);
+            Say("2. Pick what should happen:", Dim);
             GUILayout.BeginHorizontal();
             if (ui.Button("<", GUILayout.Width(26))) giftNewEv = (giftNewEv - 1 + choices.Count) % choices.Count;
-            GUILayout.Label(giftNewEv >= 0 && giftNewEv < choices.Count ? choices[giftNewEv] : "(off)", GUILayout.Width(150));
+            GUILayout.Label(Nice(giftNewEv >= 0 && giftNewEv < choices.Count ? (giftNewEv == 0 ? null : choices[giftNewEv]) : null), GUILayout.Width(190));
             if (ui.Button(">", GUILayout.Width(26))) giftNewEv = (giftNewEv + 1) % choices.Count;
-            if (ui.Button("Add rule")) giftActKind = 3;
             GUILayout.EndHorizontal();
-            if (giftMsg != "") GUILayout.Label("  " + giftMsg);
+            Say("3. Save it:", Dim);
+            if (ui.Button("Add this rule")) giftActKind = 3;
+            if (giftMsg != "") Say(giftMsg, giftMsg.StartsWith("Saved") ? Good : Bad);
+        }
+
+        private static string Nice(string ev) => ev == null ? "do nothing" : ev;
+
+        private static readonly Color Good = new Color(0.45f, 0.9f, 0.55f), Bad = new Color(1f, 0.55f, 0.5f), Dim = new Color(1f, 1f, 1f, 0.65f);
+        private static void Say(string text, Color? color = null)
+        {
+            var old = GUI.color;
+            if (color.HasValue) GUI.color = color.Value;
+            GUILayout.Label(text);
+            GUI.color = old;
+        }
+
+        private void Tabs()
+        {
+            string[] names = { "Chaos", "Stream", "TikTok Gifts" };
+            GUILayout.BeginHorizontal();
+            for (int i = 0; i < names.Length; i++)
+            {
+                int idx = i;
+                if (ui.Button((tab == i ? "[ " + names[i] + " ]" : names[i]))) Later(() => tab = idx);
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.Space(4);
+        }
+
+        private static string Secs(float s) => s >= 60f ? (s / 60f) + " min" : s + " sec";
+
+        private void DrawChaosTab(string locked)
+        {
+            if (locked != null)
+            {
+                Say("Chaos Mode is locked right now.", Bad);
+                Say(locked, Bad);
+                Say("To use it, host a Friends Only or Invite Only lobby and start a game.", Dim);
+                return;
+            }
+            Say("Random events hit everyone in your lobby, on a timer.", Dim);
+            chaos.Enabled = ui.Toggle(chaos.Enabled, "Random events");
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("One every:");
+            foreach (var sec in new[] { 30f, 60f, 120f })
+                if (ui.Button((chaos.Interval == sec ? "[ " + Secs(sec) + " ]" : Secs(sec)))) chaos.Interval = sec;
+            GUILayout.EndHorizontal();
+            if (chaos.Enabled) Say("Next event in " + Mathf.CeilToInt(chaos.NextEventIn) + " seconds.", Good);
+            if (chaos.LastEvent != "") Say("Last event: " + chaos.LastEvent, Dim);
+            GUILayout.Space(6);
+            if (ui.Button("Trigger a random event now")) chaos.TriggerRandom();
+            bool open = showTest;
+            if (ui.Button(open ? "Hide the event list" : "Pick a specific event...")) Later(() => showTest = !showTest);
+            if (open)
+            {
+                int col = 0;
+                GUILayout.BeginHorizontal();
+                foreach (var name in chaos.EventNames)
+                {
+                    if (col == 3) { GUILayout.EndHorizontal(); GUILayout.BeginHorizontal(); col = 0; }
+                    if (ui.Button(name, GUILayout.Width(108))) chaos.TriggerByName(name);
+                    col++;
+                }
+                GUILayout.EndHorizontal();
+            }
+        }
+
+        private void DrawStreamTab(string locked)
+        {
+            Say("Let your chat decide what happens next. Viewers type 1, 2 or 3 to vote.", Dim);
+            if (!ChatBridgeInstalled())
+            {
+                chaos.CreatorMode = false;
+                Say("Chat votes are locked: ChatBridge isn't installed.", Bad);
+                Say("Extract the ChatBridge download into your game folder, then reopen this menu.", Dim);
+                return;
+            }
+            if (locked != null) { Say("Locked right now: " + locked, Bad); return; }
+
+            chaos.CreatorMode = ui.Toggle(chaos.CreatorMode, "Chat votes");
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Each vote lasts:");
+            foreach (var sec in new[] { 15f, 25f, 40f })
+                if (ui.Button((chaos.VoteSeconds == sec ? "[ " + Secs(sec) + " ]" : Secs(sec)))) chaos.VoteSeconds = sec;
+            GUILayout.EndHorizontal();
+            chaos.ShowInGame = ui.Toggle(chaos.ShowInGame, "Show the vote box in the game");
+            Say("Turn this off if you use the OBS overlay, so viewers don't see it twice.", Dim);
+            if (chaos.CreatorMode && !chaos.Vote.Active && ui.Button("Start the next vote now")) chaos.StartVote();
+
+            GUILayout.Space(8);
+            Say("<b>Where your chat comes from</b>");
+            Say("Twitch (built in): type your channel name", Dim);
+            channelInput = ui.TextField("channel", channelInput, 40);
+            GUILayout.BeginHorizontal();
+            if (ui.Button(chaos.Twitch.Connected ? "Reconnect" : "Connect"))
+            {
+                chaos.Twitch.Connect(channelInput);
+                try { File.WriteAllText(CfgPath, channelInput ?? ""); } catch { }
+            }
+            if (ui.Button("Disconnect")) chaos.Twitch.Disconnect();
+            GUILayout.EndHorizontal();
+            Say(chaos.Twitch.Status, chaos.Twitch.Connected ? Good : Dim);
+            GUILayout.Space(4);
+            Say("YouTube, TikTok and Kick come through the ChatBridge app. Open it and press Start.", Dim);
+            Say(chaos.CreatorMode ? chaos.Bridge.Status : "Turn on Chat votes to connect to ChatBridge.", chaos.CreatorMode && chaos.Bridge.Connected ? Good : Dim);
+        }
+
+        private void DrawGiftsTab()
+        {
+            Say("When a viewer sends a TikTok gift, make something happen in the game.", Dim);
+            if (!ChatBridgeInstalled())
+            {
+                Say("Needs ChatBridge. Extract the ChatBridge download into your game folder first.", Bad);
+                return;
+            }
+            if (!chaos.CreatorMode) Say("Gifts only work while Chat votes are on (Stream tab).", Bad);
+            else if (!chaos.Bridge.Connected) Say("ChatBridge isn't running yet. Open it and connect TikTok through TikFinity.", Bad);
+            else Say("Ready. Gifts will trigger the rules below.", Good);
+            Say("Gifts only do something while a workday is running.", Dim);
+            GUILayout.Space(6);
+            DrawGiftEditor();
         }
 
         private void OnDestroy() { chaos.Twitch.Disconnect(); chaos.Bridge.KeepAlive(false); }
@@ -191,83 +315,18 @@ namespace ChaosMode
 
         private void DrawWindow()
         {
-            var area = new Rect(440f, 40f, 360f, Screen.height - 60f);
+            var area = new Rect(440f, 40f, 380f, Screen.height - 60f);
             GUILayout.BeginArea(area);
             GUILayout.BeginVertical(GUI.skin.box);
             ui.BeginWindow(area);
-            GUILayout.Label("<b>Chaos Mode  [F2]</b>");
+            GUILayout.Label("<b>Chaos Mode</b>   (press F2 to close)");
             string locked = LockReason();
-            if (locked != null)
-            {
-                GUI.color = new Color(1f, 0.55f, 0.5f);
-                GUILayout.Label("LOCKED: " + locked);
-                GUILayout.Label("Host a Friends Only or Invite Only game to use this.");
-                GUI.color = Color.white;
-            }
-            else
-            {
-                chaos.Enabled = ui.Toggle(chaos.Enabled, "Chaos Mode ON");
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Every:");
-                foreach (var sec in new[] { 30f, 60f, 120f })
-                    if (ui.Button((chaos.Interval == sec ? "> " : "") + sec + "s")) chaos.Interval = sec;
-                GUILayout.EndHorizontal();
-                if (chaos.Enabled) GUILayout.Label("Next event in " + Mathf.CeilToInt(chaos.NextEventIn) + "s" + (chaos.LastEvent != "" ? "   (last: " + chaos.LastEvent + ")" : ""));
-                if (ui.Button("Trigger random event now")) chaos.TriggerRandom();
-                showTest = ui.Toggle(showTest, "Test a specific event");
-                if (showTest)
-                {
-                    int col = 0;
-                    GUILayout.BeginHorizontal();
-                    foreach (var name in chaos.EventNames)
-                    {
-                        if (col == 3) { GUILayout.EndHorizontal(); GUILayout.BeginHorizontal(); col = 0; }
-                        if (ui.Button(name, GUILayout.Width(108))) chaos.TriggerByName(name);
-                        col++;
-                    }
-                    GUILayout.EndHorizontal();
-                }
-
-                GUILayout.Space(6);
-                GUILayout.Label("<b>Creator Mode</b> (chat votes on events, back-to-back)");
-                if (ChatBridgeInstalled())
-                    chaos.CreatorMode = ui.Toggle(chaos.CreatorMode, "Creator Mode (chat votes)");
-                else
-                {
-                    chaos.CreatorMode = false;
-                    GUI.color = new Color(1f, 0.55f, 0.5f);
-                    GUILayout.Label("Creator Mode is locked: ChatBridge isn't installed.");
-                    GUILayout.Label("Copy the ChatBridge folder from the download into the game folder.");
-                    GUI.color = Color.white;
-                }
-                chaos.ShowInGame = ui.Toggle(chaos.ShowInGame, "Show vote box in game (turn off if using the OBS overlay)");
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Vote length:");
-                foreach (var sec in new[] { 15f, 25f, 40f })
-                    if (ui.Button((chaos.VoteSeconds == sec ? "> " : "") + sec + "s")) chaos.VoteSeconds = sec;
-                GUILayout.EndHorizontal();
-                GUILayout.Label("Twitch (built in):");
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Channel:", GUILayout.Width(60));
-                channelInput = ui.TextField("channel", channelInput, 40);
-                GUILayout.EndHorizontal();
-                GUILayout.BeginHorizontal();
-                if (ui.Button(chaos.Twitch.Connected ? "Reconnect" : "Connect"))
-                {
-                    chaos.Twitch.Connect(channelInput);
-                    try { File.WriteAllText(CfgPath, channelInput ?? ""); } catch { }
-                }
-                if (ui.Button("Disconnect")) chaos.Twitch.Disconnect();
-                GUILayout.EndHorizontal();
-                GUILayout.Label("  " + chaos.Twitch.Status);
-                GUILayout.Label("YouTube / TikTok / Kick:");
-                GUILayout.Label("  " + (chaos.CreatorMode ? chaos.Bridge.Status : "(turn on Creator Mode)"));
-                GUILayout.Label("TikTok gifts: " + (chaos.CreatorMode ? chaos.Gifts.Summary : "(turn on Creator Mode)"));
-                if (ChatBridgeInstalled()) showGifts = ui.Toggle(showGifts, "Edit gift rules");
-                if (showGifts && ChatBridgeInstalled()) DrawGiftEditor();
-                if (chaos.CreatorMode && !chaos.Vote.Active && ui.Button("Start next vote now")) chaos.StartVote();
-            }
-            GUILayout.Label("<size=10>16 punishments, 8 rewards. Friends don't need the mod.</size>");
+            Tabs();
+            if (tab == 0) DrawChaosTab(locked);
+            else if (tab == 1) DrawStreamTab(locked);
+            else DrawGiftsTab();
+            GUILayout.Space(6);
+            Say("24 events: 16 punishments, 8 rewards. Your friends don't need the mod.", Dim);
             GUILayout.EndVertical();
             GUILayout.EndArea();
         }

@@ -1,6 +1,7 @@
 **Chaos Mode v1.2** adds TikTok gifts.
 
-- **Gifts trigger events.** With Creator Mode on and TikTok connected through TikFinity, you choose what each gift does in the F2 menu (**Edit gift rules**: add, change or delete rules without leaving the game) or in `ChatBridge\gifts.txt`. Example: `Galaxy = END DAY` ends the workday on the spot, `Rose = MONEY RAIN` makes it rain. Rules by gift name or by diamond value (`>= 500 = JACKPOT`). The file is created for you the first time, reloads while the game runs, and the menu keeps your comments.
+- **Gifts trigger events.** With Creator Mode on and TikTok connected through TikFinity, you choose what each gift does in the F2 menu (the **TikTok Gifts** tab: add, change or delete rules without leaving the game) or in `ChatBridge\gifts.txt`. Example: `Galaxy = END DAY` ends the workday on the spot, `Rose = MONEY RAIN` makes it rain. Rules by gift name or by diamond value (`>= 500 = JACKPOT`). The file is created for you the first time, reloads while the game runs, and the menu keeps your comments.
+- **Simpler F2 menu.** Three tabs (Chaos, Stream, TikTok Gifts) in plain words, with green and red status lines so you can see what's connected.
 - **New gift-only event: END DAY.** Clocks everyone out right now.
 - A gift combo fires once when it ends, gifts between days do nothing, and a gift storm is spaced out to one event every 2 seconds.
 - ChatBridge forwards TikTok gifts to the game (both through TikFinity and the direct connection).
