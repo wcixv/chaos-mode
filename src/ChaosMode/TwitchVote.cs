@@ -171,6 +171,7 @@ namespace ChaosMode
     {
         public const int Port = 47800;
         public bool Connected { get; private set; }
+        public string Version { get; private set; } = "";   // ChatBridge version (v1.1 and older never send one)
         public string Status { get; private set; } = "ChatBridge not running";
 
         private Thread thread;
@@ -253,6 +254,7 @@ namespace ChaosMode
                             all = all.Substring(nl + 1);
                             var parts = line.Split('\t');
                             if (parts.Length >= 2 && parts[0] == "#status") { Status = "ChatBridge: " + parts[1]; continue; }
+                            if (parts.Length >= 2 && parts[0] == "#version") { Version = parts[1]; continue; }
                             if (parts[0] == "#gift" && parts.Length >= 6)
                             {
                                 int dia, cnt; int.TryParse(parts[4], out dia); int.TryParse(parts[5], out cnt);
@@ -276,6 +278,7 @@ namespace ChaosMode
                 }
                 catch { }
                 current = null;
+                Version = "";
                 try { client?.Close(); } catch { }
                 if (Connected) Loader.Log("ChatBridge disconnected.");
                 Connected = false;
