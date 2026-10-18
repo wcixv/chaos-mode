@@ -283,7 +283,7 @@
     <p class="sub">Windows, Steam version of the playtest. It runs on BepInEx, which needs a one-time setup.</p>
     <ol class="steps">
       <li>Set up BepInEx once with the community <a href="https://github.com/swyf-modding/Setup">Setup tool</a>. Download it, then run <code>setup.ps1</code> in PowerShell with your game folder. The <a href="https://github.com/wcixv/chaos-mode#install" id="readme-link">README</a> has the exact line.</li>
-      <li>Download <b>ChaosMode-v1.2.1.zip</b> and <b>ChatBridge-v1.2.1.zip</b> from the <a href="https://github.com/wcixv/chaos-mode/releases/latest" id="dl-steps">latest release</a>.</li>
+      <li>Download <b>ChaosMode-v1.2.zip</b> and <b>ChatBridge-v1.2.zip</b> from the <a href="https://github.com/wcixv/chaos-mode/releases/latest" id="dl-steps">latest release</a>.</li>
       <li>In Steam, right-click the game and choose <b>Manage → Browse local files</b>, then put <code>ChaosMode.dll</code> in the <code>BepInEx\plugins</code> folder and extract the ChatBridge zip into the game folder. Creator Mode stays locked until ChatBridge is installed.</li>
       <li>Host a <b>Friends Only</b> or <b>Invite Only</b> lobby and press <b>F2</b>. Chaos Mode is locked in public lobbies.</li>
     </ol>
@@ -295,7 +295,6 @@
     <details><summary>The F2 menu says Locked</summary><p>You need to be the host, and the lobby has to be Friends Only or Invite Only.</p></details>
     <details><summary>Windows warns about ChatBridge</summary><p>It isn't code-signed. Click <b>More info</b>, then <b>Run anyway</b>.</p></details>
     <details><summary>How do I choose which gift does what?</summary><p>Press F2 and open the <b>TikTok Gifts</b> tab: type a gift name, pick an event and press Add this rule. Or open <code>BepInEx\config\ChaosMode\gifts.txt</code> in the game folder, write one rule per line like <code>Galaxy = END DAY</code>, and save. It reloads while the game runs, and the file lists every event you can use.</p></details>
-    <details><summary>TikTok gifts do nothing</summary><p>Open the <b>TikTok Gifts</b> tab in the F2 menu. It tells you what's missing: Chat votes off, a ChatBridge that's too old, or no rule for that gift. It also shows the last gift it received, and the <b>Test</b> button next to a rule tries it without waiting for a gift. Gifts only fire while a workday is running.</p></details>
     <details><summary>TikTok won't connect</summary><p>Open TikFinity, log in, and turn on its Event API (port 21213). ChatBridge connects to it automatically.</p></details>
     <details><summary>I have v1.0 installed</summary><p>Delete <code>winhttp.dll</code>, <code>doorstop_config.ini</code>, the <code>ModLoader</code> folder and <code>Mods\ChaosMode.dll</code> from the game folder, then follow the install steps above. The Setup tool leaves old copies alone, and the old ones point at the v1.0 loader.</p></details>
     <details><summary>Do I have to set it up again after an update?</summary><p>No. Your timer, vote length, Twitch channel and gift rules are saved in <code>BepInEx\config\ChaosMode</code>, separate from the plugin and ChatBridge. Copy that folder to move your setup to another PC.</p></details>
