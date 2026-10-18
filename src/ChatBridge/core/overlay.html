@@ -23,9 +23,9 @@
     width: 440px; background: var(--bg); border-radius: 18px; overflow: hidden;
     box-shadow: 0 12px 40px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.07);
     transform-origin: top right;
-    transition: opacity .35s ease, transform .35s cubic-bezier(.2,1.4,.4,1);
+    max-height: 700px; transition: opacity .35s ease, transform .35s cubic-bezier(.2,1.4,.4,1), max-height .35s ease;
   }
-  .panel.hidden { opacity: 0; transform: translateY(-12px) scale(.96); }
+  .panel.hidden { opacity: 0; transform: translateY(-12px) scale(.96); max-height: 0; }
   .topbar { height: 5px; background: linear-gradient(90deg, var(--accent), #ff8a4d); }
   .head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px 8px; }
   .tag { font-weight: 900; letter-spacing: 2px; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
@@ -70,16 +70,55 @@
   .idle { padding: 12px 20px 16px; }
   .idle .msg { font-size: 15px; color: var(--dim); margin-top: 2px; }
   .idle .msg b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+  /* gift cards: slide in under the vote box when a TikTok gift fires an event */
+  #gifts { width: 440px; display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+  .gift { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 14px; background: var(--bg); position: relative; overflow: hidden;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.07); animation: giftin .45s cubic-bezier(.2,1.4,.4,1); }
+  .gift::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; background: var(--accent); }
+  .gift.good::before { background: var(--good); }
+  .gift.out { animation: giftout .4s ease forwards; }
+  .gift .gk { flex: none; font-weight: 900; font-size: 11px; letter-spacing: 2px; color: var(--gold); writing-mode: vertical-rl; transform: rotate(180deg); }
+  .gift .gb { flex: 1; min-width: 0; }
+  .gift .gu { font-size: 14px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gift .gu b { color: var(--text); }
+  .gift .ge { font-weight: 900; font-size: 24px; line-height: 1.1; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gift.good .ge { color: var(--good); }
+  .gift .gd { font-size: 13px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @keyframes giftin { 0% { transform: translateX(40px) scale(.9); opacity: 0; } 100% { transform: none; opacity: 1; } }
+  @keyframes giftout { to { transform: translateX(40px); opacity: 0; } }
 </style>
 </head>
 <body>
 <div id="panel" class="panel hidden"></div>
+<div id="gifts"></div>
 <script>
 const COLORS = ["var(--c1)", "var(--c2)", "var(--c3)"];
 const panel = document.getElementById("panel");
 let last = null, lastMode = "", lastCounts = [];
 
 function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+
+// ---- TikTok gift cards ----
+const giftBox = document.getElementById("gifts");
+let giftSeq = null;   // last gift number seen; the first message only sets it, so a page reload doesn't replay old gifts
+function showGift(g) {
+  const el = document.createElement("div");
+  el.className = "gift" + (g.good ? " good" : "");
+  const times = g.count > 1 ? " x" + g.count : "";
+  el.innerHTML = `<div class="gk">GIFT</div><div class="gb"><div class="gu"><b>${esc(g.user)}</b> sent ${esc(g.name)}${times}</div>` +
+    `<div class="ge">${esc(g.event)}</div><div class="gd">${esc(g.desc)}</div></div>`;
+  giftBox.appendChild(el);
+  while (giftBox.children.length > 3) giftBox.removeChild(giftBox.firstChild);
+  setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 450); }, 6000);
+}
+function handleGift(s) {
+  if (!s || !s.gift) return;
+  if (giftSeq === null) { giftSeq = s.gift.seq; return; }
+  if (s.gift.seq > giftSeq) { giftSeq = s.gift.seq; showGift(s.gift); }
+  else if (s.gift.seq < giftSeq) giftSeq = s.gift.seq;   // game restarted
+}
 
 function render(s) {
   if (!s || s.state === "off") { panel.classList.add("hidden"); lastMode = "off"; return; }
@@ -149,10 +188,10 @@ function render(s) {
 let lastSeen = 0;
 function connect() {
   const es = new EventSource("/events");
-  es.onmessage = (e) => { lastSeen = Date.now(); try { last = JSON.parse(e.data); render(last); } catch (_) {} };
+  es.onmessage = (e) => { lastSeen = Date.now(); try { last = JSON.parse(e.data); render(last); handleGift(last); } catch (_) {} };
   es.onerror = () => { es.close(); setTimeout(connect, 1500); };
 }
-setInterval(() => { if (Date.now() - lastSeen > 3000) render(null); }, 1000);
+setInterval(() => { if (Date.now() - lastSeen > 3000) { render(null); giftSeq = null; } }, 1000);
 if (new URLSearchParams(location.search).has("demo")) {
   // ?demo shows a fake vote so you can position it in OBS
   let t = 20, c = [3, 7, 1];
@@ -164,6 +203,9 @@ if (new URLSearchParams(location.search).has("demo")) {
                 { name: "JACKPOT", desc: "One lucky player wins $750", good: true, count: c[1] },
                 { name: "BANKRUPTCY", desc: "Team loses HALF its cash", good: false, count: c[2] }], winner: {} });
   }, 250);
+  const demoGifts = [["Rose", "MONEY RAIN", "Everyone gets $150", true], ["Galaxy", "END DAY", "The workday ends right now", false], ["Doughnut", "TASED", "Everyone gets tased", false]];
+  let gi = 0;
+  setInterval(() => { const d = demoGifts[gi++ % demoGifts.length]; showGift({ user: "SomeViewer", name: d[0], count: 1, event: d[1], desc: d[2], good: d[3] }); }, 7000);
 } else connect();
 </script>
 </body>

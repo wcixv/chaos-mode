@@ -82,6 +82,7 @@ namespace ChaosMode
         // Called every frame by the trainer. allowed = host + private lobby.
         // Creator Mode (Twitch chat votes)
         public bool CreatorMode;
+        public bool GiftsOn;                      // TikTok gifts trigger events (works with or without chat votes)
         public bool ShowInGame = true;
         private float nextPublish;
         public float VoteSeconds = 25f;
@@ -94,6 +95,8 @@ namespace ChaosMode
         public int GiftsReceived;                 // gifts ChatBridge has passed to the game this session
         public string LastGift = "";              // what happened with the last one, shown in the menu
         public bool LastGiftFired;
+        // The last gift that fired an event, sent to the OBS overlay so it can pop up a "thanks" card.
+        public int GiftSeq; public string GiftUser = "", GiftName = "", GiftEvent = ""; public int GiftCount = 1;
         private float nextGiftAt;
         public string LastResult = "";
         public string LastWinner = ""; public int LastWinnerVotes, LastWinnerTotal; public float LastWinnerAt = -100f;
@@ -161,17 +164,17 @@ namespace ChaosMode
             chat.AddRange(Bridge.Drain());
             var gifts = Bridge.DrainGifts();
             Gifts.Refresh(Time.unscaledTime);
-            Bridge.KeepAlive(CreatorMode);
+            Bridge.KeepAlive(CreatorMode || GiftsOn);
             if (Bridge.Connected && Time.unscaledTime >= nextPublish)
             {
                 nextPublish = Time.unscaledTime + 0.2f;
                 try { Bridge.SendLine("#vote\t" + StateJson()); } catch (Exception e) { Loader.Log("Publish failed: " + e.Message); }
             }
 
-            if (!allowed) { Enabled = false; CreatorMode = false; Vote.Active = false; nextAt = -1f; giftQueue.Clear(); return; }
+            if (!allowed) { Enabled = false; CreatorMode = false; GiftsOn = false; Vote.Active = false; nextAt = -1f; giftQueue.Clear(); return; }
 
             // TikTok gifts fire their event (one every couple of seconds so a gift storm doesn't stack up)
-            if (CreatorMode)
+            if (GiftsOn)
             {
                 foreach (var g in gifts) { GiftsReceived++; if (giftQueue.Count < 30) giftQueue.Enqueue(g); }
                 if (giftQueue.Count > 0 && Time.unscaledTime >= nextGiftAt) RunGift(giftQueue.Dequeue());
@@ -179,7 +182,7 @@ namespace ChaosMode
             else
             {
                 giftQueue.Clear();
-                foreach (var g in gifts) { GiftsReceived++; LastGift = g.User + " sent " + g.Name + " - ignored: Chat votes are off"; LastGiftFired = false; }
+                foreach (var g in gifts) { GiftsReceived++; LastGift = g.User + " sent " + g.Name + " - ignored: TikTok gifts are turned off"; LastGiftFired = false; }
             }
 
             // ----- Creator Mode: chat votes back-to-back, replaces the normal timer -----
@@ -246,7 +249,10 @@ namespace ChaosMode
             }
             sb.Append("],\"winner\":{\"name\":").Append(J(LastWinner)).Append(",\"desc\":").Append(J(VoteOverlay.Describe(LastWinner)))
               .Append(",\"good\":").Append(VoteOverlay.Good.Contains(LastWinner) ? "true" : "false")
-              .Append(",\"votes\":").Append(LastWinnerVotes).Append(",\"total\":").Append(LastWinnerTotal).Append("}}");
+              .Append(",\"votes\":").Append(LastWinnerVotes).Append(",\"total\":").Append(LastWinnerTotal).Append("}");
+            sb.Append(",\"gift\":{\"seq\":").Append(GiftSeq).Append(",\"user\":").Append(J(GiftUser)).Append(",\"name\":").Append(J(GiftName))
+              .Append(",\"count\":").Append(GiftCount).Append(",\"event\":").Append(J(GiftEvent)).Append(",\"desc\":").Append(J(VoteOverlay.Describe(GiftEvent)))
+              .Append(",\"good\":").Append(VoteOverlay.Good.Contains(GiftEvent) ? "true" : "false").Append("}}");
             return sb.ToString();
         }
 
@@ -274,6 +280,7 @@ namespace ChaosMode
             nextGiftAt = Time.unscaledTime + 2f;
             LastGift = head + " -> " + ev;
             LastGiftFired = true;
+            GiftUser = g.User; GiftName = g.Name; GiftEvent = ev; GiftCount = g.Count < 1 ? 1 : g.Count; GiftSeq++;
             Trigger(ev, " (" + g.User + " sent " + g.Name + ")");
         }
 

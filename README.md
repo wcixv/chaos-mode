@@ -44,9 +44,9 @@ powershell -ExecutionPolicy Bypass -File .\setup.ps1 -GameDir "C:\...\steamapps\
 
 **2. Install Chaos Mode**
 
-1. Download **`ChaosMode-v1.2.1.zip`** and **`ChatBridge-v1.2.1.zip`** from [Releases](../../releases/latest).
+1. Download **`ChaosMode-v1.2.2.zip`** and **`ChatBridge-v1.2.2.zip`** from [Releases](../../releases/latest).
 2. In Steam: right-click the game → **Manage → Browse local files**.
-3. Put **`ChaosMode.dll`** (from `ChaosMode-v1.2.1.zip`) in the **`BepInEx\plugins`** folder. Extract **`ChatBridge-v1.2.1.zip`** into the game folder so you have `ChatBridge\ChatBridge.exe`. To start it later, go to the game folder, open the `ChatBridge` folder and run `ChatBridge.exe`. Creator Mode (chat votes) stays locked until ChatBridge is installed.
+3. Put **`ChaosMode.dll`** (from `ChaosMode-v1.2.2.zip`) in the **`BepInEx\plugins`** folder. Extract **`ChatBridge-v1.2.2.zip`** into the game folder so you have `ChatBridge\ChatBridge.exe`. To start it later, go to the game folder, open the `ChatBridge` folder and run `ChatBridge.exe`. Creator Mode (chat votes) stays locked until ChatBridge is installed.
 4. Launch the game, host a **Friends Only** or **Invite Only** lobby and press **F2**.
 
 **Coming from v1.0?** Delete `winhttp.dll`, `doorstop_config.ini`, the `ModLoader` folder and `Mods\ChaosMode.dll` from the game folder before step 1. The Setup tool leaves existing copies alone, and the old ones point at the v1.0 loader.
@@ -86,7 +86,7 @@ Without Creator Mode, a random event fires every 30, 60 or 120 seconds. The F2 m
 
 ### TikTok gifts
 
-With Creator Mode on and ChatBridge connected to TikTok through TikFinity, gifts can fire events. Set the rules in the **F2 menu**, on the **TikTok Gifts** tab: type a gift name (or a diamond amount like `500`), pick an event with `<` `>` and press **Add this rule**. Change an existing rule with its `<` `>` buttons, or press **Delete**. Rules are saved in **`BepInEx\config\ChaosMode\gifts.txt`** in the game folder, in the game folder. They stay saved between games and through updates, so you only set them up once. You can also edit that file by hand any time, no restart needed (the menu keeps your comments):
+With **TikTok gifts** switched on and ChatBridge connected to TikTok through TikFinity, gifts can fire events. The switch is on the **TikTok Gifts** tab of the F2 menu and is separate from **Chat votes**, so you can use gifts only, votes only, or both. Set the rules in the **F2 menu**, on the **TikTok Gifts** tab: type a gift name (or a diamond amount like `500`), pick an event with `<` `>` and press **Add this rule**. Change an existing rule with its `<` `>` buttons, or press **Delete**. Rules are saved in **`BepInEx\config\ChaosMode\gifts.txt`** in the game folder, in the game folder. They stay saved between games and through updates, so you only set them up once. You can also edit that file by hand any time, no restart needed (the menu keeps your comments):
 
 ```
 Rose = MONEY RAIN
@@ -104,7 +104,11 @@ Doughnut = none
 
 ### OBS overlay
 
-In ChatBridge, click **Copy** next to *OBS overlay*. In OBS, add a **Browser** source with that URL at **480 × 420**. Click **Preview** in ChatBridge to see a demo vote while you position it. Turn off *Show vote box in game* in the F2 menu so viewers don't see the vote twice.
+In ChatBridge, click **Copy** next to *OBS overlay*. In OBS, add a **Browser** source with that URL at **480 × 420**. Click **Preview** in ChatBridge to see a demo vote and a demo gift card while you position it. Turn off *Show vote box in game* in the F2 menu so viewers don't see the vote twice.
+
+When a TikTok gift fires an event, the overlay pops up a card under the vote box showing who sent what and what it did. The cards also work with Chat votes off.
+
+**TikTok LIVE Studio:** it refuses `localhost` links. Use `http://localtest.me:47801/overlay` instead (a name that always points back to your own PC; it needs an internet connection to look it up). ChatBridge prints this link in its window when it starts. In LIVE Studio, add a web link source and paste it.
 
 ## Your settings are remembered
 

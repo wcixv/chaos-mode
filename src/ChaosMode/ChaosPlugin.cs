@@ -88,7 +88,7 @@ namespace ChaosMode
                 bool wantGui = showMenu || Time.unscaledTime < chaos.BannerUntil || (chaos.CreatorMode && chaos.ShowInGame);
                 if (gui.enabled != wantGui) gui.enabled = wantGui;
 
-                if (chaos.CreatorMode && !ChatBridgeInstalled()) chaos.CreatorMode = false;
+                if ((chaos.CreatorMode || chaos.GiftsOn) && !ChatBridgeInstalled()) { chaos.CreatorMode = false; chaos.GiftsOn = false; }
                 chaos.Tick(LockReason() == null);
             }
             catch (Exception e) { Loader.Log("Update error: " + e); }
@@ -215,7 +215,7 @@ namespace ChaosMode
             Say("Let your chat decide what happens next. Viewers type 1, 2 or 3 to vote.", Dim);
             if (!ChatBridgeInstalled())
             {
-                chaos.CreatorMode = false;
+                chaos.CreatorMode = false; chaos.GiftsOn = false;
                 Say("Chat votes are locked: ChatBridge isn't installed.", Bad);
                 Say("Extract the ChatBridge download into your game folder. You should end up with a ChatBridge folder next to the game, with ChatBridge.exe inside it.", Dim);
                 return;
@@ -247,10 +247,11 @@ namespace ChaosMode
             Say(chaos.Twitch.Status, chaos.Twitch.Connected ? Good : Dim);
             GUILayout.Space(4);
             Say("YouTube, TikTok and Kick need the ChatBridge app. To open it: go to your game folder (Steam: right-click the game > Manage > Browse local files), open the ChatBridge folder and run ChatBridge.exe.", Dim);
-            Say(chaos.CreatorMode ? chaos.Bridge.Status : "Turn on Chat votes to connect to ChatBridge.", chaos.CreatorMode && chaos.Bridge.Connected ? Good : Dim);
+            bool bridgeWanted = chaos.CreatorMode || chaos.GiftsOn;
+            Say(bridgeWanted ? chaos.Bridge.Status : "Turn on Chat votes (or TikTok gifts) to connect to ChatBridge.", bridgeWanted && chaos.Bridge.Connected ? Good : Dim);
         }
 
-        private void DrawGiftsTab()
+        private void DrawGiftsTab(string locked)
         {
             Say("When a viewer sends a TikTok gift, make something happen in the game.", Dim);
             if (!ChatBridgeInstalled())
@@ -258,7 +259,13 @@ namespace ChaosMode
                 Say("Needs ChatBridge. Extract the ChatBridge download into your game folder first. Its ChatBridge folder holds ChatBridge.exe.", Bad);
                 return;
             }
-            if (!chaos.CreatorMode) Say("Gifts only work while Chat votes are on (Stream tab).", Bad);
+            if (locked != null) { Say("Locked right now: " + locked, Bad); }
+            else
+            {
+                if (ui.Button((chaos.GiftsOn ? "[ON]  " : "[off]  ") + "TikTok gifts")) Later(() => chaos.GiftsOn = !chaos.GiftsOn);
+                Say("This is separate from Chat votes. You can use gifts only, votes only, or both.", Dim);
+            }
+            if (!chaos.GiftsOn) Say("Turn TikTok gifts on to let gifts trigger the rules below.", Dim);
             else if (!chaos.Bridge.Connected) Say("ChatBridge isn't running yet. Go to your game folder, open the ChatBridge folder and run ChatBridge.exe. Then connect TikTok through TikFinity.", Bad);
             else if (chaos.Bridge.Version == "") Say("Your ChatBridge is out of date and can't send gifts. Download the newest ChatBridge zip from the releases page and extract it into the game folder (replace the files), then restart ChatBridge.", Bad);
             else Say("Ready. ChatBridge " + chaos.Bridge.Version + " is connected. Gifts will trigger the rules below.", Good);
@@ -334,7 +341,7 @@ namespace ChaosMode
             Tabs();
             if (tab == 0) DrawChaosTab(locked);
             else if (tab == 1) DrawStreamTab(locked);
-            else DrawGiftsTab();
+            else DrawGiftsTab(locked);
             GUILayout.Space(6);
             Say("24 events: 16 punishments, 8 rewards. Your friends don't need the mod.", Dim);
             GUILayout.EndVertical();

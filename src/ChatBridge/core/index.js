@@ -7,7 +7,7 @@ const path = require("path");
 const net = require("net");
 const readline = require("readline");
 
-const VERSION = "1.2.1";
+const VERSION = "1.2.2";
 const PORT = 47800;
 const OVERLAY_PORT = 47801;
 const http = require("http");
@@ -129,7 +129,7 @@ const overlayServer = http.createServer((req, res) => {
   res.writeHead(404); res.end();
 });
 overlayServer.on("error", (e) => log("overlay", "couldn't start overlay server: " + e.message));
-overlayServer.listen(OVERLAY_PORT, "127.0.0.1", () => log("overlay", `OBS overlay: http://localhost:${OVERLAY_PORT}/overlay`));
+overlayServer.listen(OVERLAY_PORT, "127.0.0.1", () => { log("overlay", `OBS overlay: http://localhost:${OVERLAY_PORT}/overlay`); log("overlay", `TikTok LIVE Studio (it rejects "localhost"): http://localtest.me:${OVERLAY_PORT}/overlay`); });
 
 // ---------------- YouTube ----------------
 async function startYouTube(id) {
