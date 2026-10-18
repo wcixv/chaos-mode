@@ -217,7 +217,7 @@ namespace ChaosMode
             {
                 chaos.CreatorMode = false;
                 Say("Chat votes are locked: ChatBridge isn't installed.", Bad);
-                Say("Extract the ChatBridge download into your game folder, then reopen this menu.", Dim);
+                Say("Extract the ChatBridge download into your game folder. You should end up with a ChatBridge folder next to the game, with ChatBridge.exe inside it.", Dim);
                 return;
             }
             if (locked != null) { Say("Locked right now: " + locked, Bad); return; }
@@ -246,7 +246,7 @@ namespace ChaosMode
             GUILayout.EndHorizontal();
             Say(chaos.Twitch.Status, chaos.Twitch.Connected ? Good : Dim);
             GUILayout.Space(4);
-            Say("YouTube, TikTok and Kick come through the ChatBridge app. Open it and press Start.", Dim);
+            Say("YouTube, TikTok and Kick need the ChatBridge app. To open it: go to your game folder (Steam: right-click the game > Manage > Browse local files), open the ChatBridge folder and run ChatBridge.exe.", Dim);
             Say(chaos.CreatorMode ? chaos.Bridge.Status : "Turn on Chat votes to connect to ChatBridge.", chaos.CreatorMode && chaos.Bridge.Connected ? Good : Dim);
         }
 
@@ -255,11 +255,11 @@ namespace ChaosMode
             Say("When a viewer sends a TikTok gift, make something happen in the game.", Dim);
             if (!ChatBridgeInstalled())
             {
-                Say("Needs ChatBridge. Extract the ChatBridge download into your game folder first.", Bad);
+                Say("Needs ChatBridge. Extract the ChatBridge download into your game folder first. Its ChatBridge folder holds ChatBridge.exe.", Bad);
                 return;
             }
             if (!chaos.CreatorMode) Say("Gifts only work while Chat votes are on (Stream tab).", Bad);
-            else if (!chaos.Bridge.Connected) Say("ChatBridge isn't running yet. Open it and connect TikTok through TikFinity.", Bad);
+            else if (!chaos.Bridge.Connected) Say("ChatBridge isn't running yet. Go to your game folder, open the ChatBridge folder and run ChatBridge.exe. Then connect TikTok through TikFinity.", Bad);
             else if (chaos.Bridge.Version == "") Say("Your ChatBridge is out of date and can't send gifts. Download the newest ChatBridge zip from the releases page and extract it into the game folder (replace the files), then restart ChatBridge.", Bad);
             else Say("Ready. ChatBridge " + chaos.Bridge.Version + " is connected. Gifts will trigger the rules below.", Good);
             Say("Gifts only do something while a workday is running.", Dim);

@@ -46,7 +46,7 @@ powershell -ExecutionPolicy Bypass -File .\setup.ps1 -GameDir "C:\...\steamapps\
 
 1. Download **`ChaosMode-v1.2.1.zip`** and **`ChatBridge-v1.2.1.zip`** from [Releases](../../releases/latest).
 2. In Steam: right-click the game → **Manage → Browse local files**.
-3. Put **`ChaosMode.dll`** (from `ChaosMode-v1.2.1.zip`) in the **`BepInEx\plugins`** folder. Extract **`ChatBridge-v1.2.1.zip`** into the game folder so you have `ChatBridge\ChatBridge.exe`. Creator Mode (chat votes) stays locked until ChatBridge is installed.
+3. Put **`ChaosMode.dll`** (from `ChaosMode-v1.2.1.zip`) in the **`BepInEx\plugins`** folder. Extract **`ChatBridge-v1.2.1.zip`** into the game folder so you have `ChatBridge\ChatBridge.exe`. To start it later, go to the game folder, open the `ChatBridge` folder and run `ChatBridge.exe`. Creator Mode (chat votes) stays locked until ChatBridge is installed.
 4. Launch the game, host a **Friends Only** or **Invite Only** lobby and press **F2**.
 
 **Coming from v1.0?** Delete `winhttp.dll`, `doorstop_config.ini`, the `ModLoader` folder and `Mods\ChaosMode.dll` from the game folder before step 1. The Setup tool leaves existing copies alone, and the old ones point at the v1.0 loader.
