@@ -5,7 +5,7 @@ using BepInEx;
 
 namespace ChaosMode
 {
-    [BepInPlugin("com.bobby.chaosmode", "Chaos Mode", "1.2.0")]
+    [BepInPlugin("com.bobby.chaosmode", "Chaos Mode", "1.2.1")]
     public class ChaosModeBepInEx : BaseUnityPlugin
     {
         private void Awake()

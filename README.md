@@ -44,9 +44,9 @@ powershell -ExecutionPolicy Bypass -File .\setup.ps1 -GameDir "C:\...\steamapps\
 
 **2. Install Chaos Mode**
 
-1. Download **`ChaosMode-v1.2.zip`** and **`ChatBridge-v1.2.zip`** from [Releases](../../releases/latest).
+1. Download **`ChaosMode-v1.2.1.zip`** and **`ChatBridge-v1.2.1.zip`** from [Releases](../../releases/latest).
 2. In Steam: right-click the game → **Manage → Browse local files**.
-3. Put **`ChaosMode.dll`** (from `ChaosMode-v1.2.zip`) in the **`BepInEx\plugins`** folder. Extract **`ChatBridge-v1.2.zip`** into the game folder so you have `ChatBridge\ChatBridge.exe`. Creator Mode (chat votes) stays locked until ChatBridge is installed.
+3. Put **`ChaosMode.dll`** (from `ChaosMode-v1.2.1.zip`) in the **`BepInEx\plugins`** folder. Extract **`ChatBridge-v1.2.1.zip`** into the game folder so you have `ChatBridge\ChatBridge.exe`. Creator Mode (chat votes) stays locked until ChatBridge is installed.
 4. Launch the game, host a **Friends Only** or **Invite Only** lobby and press **F2**.
 
 **Coming from v1.0?** Delete `winhttp.dll`, `doorstop_config.ini`, the `ModLoader` folder and `Mods\ChaosMode.dll` from the game folder before step 1. The Setup tool leaves existing copies alone, and the old ones point at the v1.0 loader.
@@ -116,6 +116,7 @@ Chaos Mode saves your timer, vote length, vote-box setting, Twitch channel and g
 |---|---|
 | Tased / Launch / Knockout do nothing | Turn **off** *Ragdoll Immunity* in the game settings |
 | F2 says LOCKED | You must be the **host** of a **Friends Only** or **Invite Only** lobby |
+| TikTok gifts do nothing | Open the **TikTok Gifts** tab in F2: it says what is missing (Chat votes off, ChatBridge too old, no rule for that gift) and shows the last gift received. Press **Test** next to a rule to try it. Make sure you extracted the newest ChatBridge zip, and send the gift while a workday is running |
 | Windows warns about ChatBridge | *More info → Run anyway* (it isn't code-signed) |
 | TikTok won't connect | Open TikFinity, log in and enable its Event API (port 21213) |
 | Kick says "lookup blocked" | Put your `kickChatroomId` in `ChatBridge\chatbridge.json` |

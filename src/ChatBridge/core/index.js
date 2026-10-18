@@ -7,6 +7,7 @@ const path = require("path");
 const net = require("net");
 const readline = require("readline");
 
+const VERSION = "1.2.1";
 const PORT = 47800;
 const OVERLAY_PORT = 47801;
 const http = require("http");
@@ -54,8 +55,8 @@ function chat(platform, user, message) {
 
 // Gifts (TikTok): forwarded to the mod, which maps them to events using BepInEx\config\ChaosMode\gifts.txt.
 function gift(platform, user, name, diamonds, count) {
-  if (!name) return;
   const clean = (x) => String(x == null ? "" : x).replace(/[\t\r\n]+/g, " ").trim();
+  if (!name) { log(platform, "got a gift but couldn't read its name (see the payload line above)"); return; }
   count = Math.max(1, Number(count) || 1);
   diamonds = Math.max(0, Math.round(Number(diamonds) || 0));
   log(platform, `${clean(user) || "someone"} sent ${clean(name)} x${count} (${diamonds} diamonds)`);
@@ -74,6 +75,7 @@ const server = net.createServer((sock) => {
     sock.isGui = isGui;
     if (!isGui) { gameCount++; log("game", "Chaos Mode connected"); }
     sock.write("#status\t" + statusLine() + "\n");
+    if (!isGui) sock.write("#version\t" + VERSION + "\n");
     sendGameState();
   };
   let buf = "";
@@ -161,10 +163,9 @@ function startTikTok(user, apiKey) {
     const conn = new TikTokLiveConnection(user, apiKey ? { signApiKey: apiKey } : {});
     conn.on(WebcastEvent.CHAT, (d) => chat("tiktok", d.user && (d.user.uniqueId || d.user.userId), d.comment));
     conn.on(WebcastEvent.GIFT, (d) => {
-      const g = d.giftDetails || {};
-      if (g.giftType === 1 && d.repeatEnd === false) return; // combo still running
-      const count = d.repeatCount || 1;
-      gift("tiktok", d.user && (d.user.uniqueId || d.user.userId), g.giftName || d.giftName, Number(g.diamondCount || d.diamondCount || 0) * count, count);
+      const g = readGift(d);
+      if (g.streak && g.repeatEnd === false) return; // combo still running
+      gift("tiktok", g.user, g.name, g.diamonds * g.count, g.count);
     });
     conn.on(ControlEvent.DISCONNECTED, () => { setStatus("TikTok", "disconnected, retrying in 20s"); setTimeout(connect, 20000); });
     setStatus("TikTok", "connecting...");
@@ -179,11 +180,43 @@ function startTikTok(user, apiKey) {
   connect();
 }
 
+// ---- reading gifts from TikFinity / TikTok payloads (field names vary, so look at several spellings, nested too) ----
+const norm = (k) => String(k).toLowerCase().replace(/[^a-z0-9]/g, "");
+function dig(obj, keys, depth) {
+  // breadth-first: the shallowest matching, non-empty primitive wins
+  const want = new Set(keys.map(norm));
+  let level = [obj];
+  for (let d = 0; d <= (depth == null ? 3 : depth) && level.length; d++) {
+    const next = [];
+    for (const o of level) {
+      if (!o || typeof o !== "object") continue;
+      for (const [k, v] of Object.entries(o)) {
+        if (want.has(norm(k)) && v != null && typeof v !== "object" && v !== "") return v;
+        if (v && typeof v === "object") next.push(v);
+      }
+    }
+    level = next;
+  }
+  return undefined;
+}
+function looksLikeGift(d) { return dig(d, ["giftName", "gift_name", "giftId", "gift_id"], 2) !== undefined; }
+function readGift(d) {
+  const name = dig(d, ["giftName", "gift_name", "name_of_gift", "extendedGiftInfo.name"], 3)
+    || (() => { const g = d.giftDetails || d.gift || d.extendedGiftInfo; return g && typeof g === "object" ? (g.giftName || g.name) : undefined; })()
+    || (dig(d, ["giftId", "gift_id"], 3) !== undefined ? "Gift " + dig(d, ["giftId", "gift_id"], 3) : undefined);
+  const each = Number(dig(d, ["diamondCount", "diamond_count", "diamonds", "giftValue", "coins", "value"], 3)) || 0;
+  const count = Number(dig(d, ["repeatCount", "repeat_count", "comboCount", "combo", "count", "amount"], 3)) || 1;
+  const end = dig(d, ["repeatEnd", "repeat_end"], 3);
+  const type = dig(d, ["giftType", "gift_type"], 3);
+  const user = dig(d, ["uniqueId", "unique_id", "userName", "username", "nickname", "userId", "user_id"], 3);
+  return { name, diamonds: each, count, user, streak: Number(type) === 1, repeatEnd: end === undefined ? undefined : (end === true || end === "true" || end === 1) };
+}
+
 // ---------------- TikTok via TikFinity ----------------
 // TikFinity Desktop exposes a local Event API websocket (default ws://localhost:21213/).
 function startTikFinity(url) {
   const WebSocket = require("ws");
-  let announced = false, gotGift = false;
+  let announced = false, giftLogs = 0;
   const seen = new Set();
   const connect = () => {
     const ws = new WebSocket(url);
@@ -194,14 +227,12 @@ function startTikFinity(url) {
       const d = m.data || m.payload || m;
       if (!seen.has(ev) && seen.size < 30) { seen.add(ev); log("TikTok", "TikFinity event type: " + (ev || "(none)")); }
       const u = d.user || {};
-      if (/gift/i.test(ev)) {
-        if (!gotGift) { gotGift = true; log("TikTok", "first gift payload: " + JSON.stringify(d).slice(0, 300)); }
-        const g = d.giftDetails || d.gift || {};
+      if (/gift/i.test(ev) || looksLikeGift(d)) {
+        if (giftLogs < 5) { giftLogs++; log("TikTok", "gift payload: " + JSON.stringify(m).slice(0, 400)); }
+        const g = readGift(d);
         // a gift streak (combo) is still running: wait for its final message so one combo fires once
-        if ((d.giftType === 1 || g.giftType === 1) && d.repeatEnd === false) return;
-        const count = d.repeatCount || d.count || d.amount || 1;
-        const each = d.diamondCount != null ? d.diamondCount : (g.diamondCount != null ? g.diamondCount : (d.diamonds != null ? d.diamonds : 0));
-        gift("tiktok", d.uniqueId || u.uniqueId || d.nickname || u.nickname, d.giftName || g.giftName || g.name || d.name, Number(each) * Number(count), count);
+        if (g.streak && g.repeatEnd === false) return;
+        gift("tiktok", g.user, g.name, g.diamonds * g.count, g.count);
         return;
       }
       if (!/chat|comment/i.test(ev)) return;

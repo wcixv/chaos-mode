@@ -91,6 +91,9 @@ namespace ChaosMode
         public readonly ChatVote Vote = new ChatVote();
         public readonly GiftMap Gifts = new GiftMap();
         private readonly Queue<GiftMsg> giftQueue = new Queue<GiftMsg>();
+        public int GiftsReceived;                 // gifts ChatBridge has passed to the game this session
+        public string LastGift = "";              // what happened with the last one, shown in the menu
+        public bool LastGiftFired;
         private float nextGiftAt;
         public string LastResult = "";
         public string LastWinner = ""; public int LastWinnerVotes, LastWinnerTotal; public float LastWinnerAt = -100f;
@@ -170,10 +173,14 @@ namespace ChaosMode
             // TikTok gifts fire their event (one every couple of seconds so a gift storm doesn't stack up)
             if (CreatorMode)
             {
-                foreach (var g in gifts) if (giftQueue.Count < 30) giftQueue.Enqueue(g);
+                foreach (var g in gifts) { GiftsReceived++; if (giftQueue.Count < 30) giftQueue.Enqueue(g); }
                 if (giftQueue.Count > 0 && Time.unscaledTime >= nextGiftAt) RunGift(giftQueue.Dequeue());
             }
-            else giftQueue.Clear();
+            else
+            {
+                giftQueue.Clear();
+                foreach (var g in gifts) { GiftsReceived++; LastGift = g.User + " sent " + g.Name + " - ignored: Chat votes are off"; LastGiftFired = false; }
+            }
 
             // ----- Creator Mode: chat votes back-to-back, replaces the normal timer -----
             if (CreatorMode)
@@ -260,10 +267,23 @@ namespace ChaosMode
         {
             string ev = Gifts.Match(g.Name, g.Diamonds);
             Loader.Log("Gift: " + g.User + " sent " + g.Name + " x" + g.Count + " (" + g.Diamonds + " diamonds) -> " + (ev ?? "no rule"));
-            if (ev == null) return;
-            if (!DayRunning()) { Show("Gift from " + g.User + " arrived between days - no effect."); return; }
+            string head = g.User + " sent " + g.Name + " (" + g.Diamonds + " diamonds)";
+            LastGiftFired = false;
+            if (ev == null) { LastGift = head + " - no rule for this gift. Add one in the list below."; return; }
+            if (!DayRunning()) { LastGift = head + " - ignored: no workday is running"; Show("Gift from " + g.User + " arrived between days - no effect."); return; }
             nextGiftAt = Time.unscaledTime + 2f;
+            LastGift = head + " -> " + ev;
+            LastGiftFired = true;
             Trigger(ev, " (" + g.User + " sent " + g.Name + ")");
+        }
+
+        // Menu "Test" button: act as if a viewer had sent this gift (works without TikTok connected).
+        public void TestGift(string key)
+        {
+            string k = GiftMap.NormalizeKey(key);
+            int dia = 1; string name = k;
+            if (k.StartsWith(">=")) { int.TryParse(k.Substring(2).Trim(), out dia); name = "Test gift"; }
+            RunGift(new GiftMsg { Platform = "test", User = "Test", Name = name, Diamonds = dia, Count = 1 });
         }
 
         public void StartVote()

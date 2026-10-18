@@ -24,7 +24,8 @@ namespace ChaosMode
         private void Later(Action a) { deferred.Enqueue(a); }  // menu clicks change state next frame, so the layout never changes mid-draw
         private string giftKey = "", giftMsg = "";
         private int giftNewEv = 1;                       // index in the list below; 0 = (off)
-        private int giftActKind, giftActLine, giftActDir; // 1 = change event, 2 = remove, 3 = add
+        private int giftActKind, giftActLine, giftActDir; // 1 = change event, 2 = remove, 3 = add, 4 = test
+        private string giftActKey = "";
         private System.Collections.Generic.List<string> GiftChoices()
         {
             var l = new System.Collections.Generic.List<string> { "(off)" };
@@ -106,6 +107,7 @@ namespace ChaosMode
                 chaos.Gifts.SetRuleAt(giftActLine, i == 0 ? null : choices[i]);
             }
             else if (kind == 2) chaos.Gifts.RemoveRuleAt(giftActLine);
+            else if (kind == 4) { if (LockReason() == null) chaos.TestGift(giftActKey); else giftMsg = "Can't test right now: " + LockReason(); }
             else if (kind == 3)
             {
                 string ev = giftNewEv <= 0 || giftNewEv >= choices.Count ? null : choices[giftNewEv];
@@ -123,11 +125,12 @@ namespace ChaosMode
             foreach (var r in chaos.Gifts.RuleList)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(r.Key, GUILayout.Width(105));
+                GUILayout.Label(r.Key, GUILayout.Width(95));
                 if (ui.Button("<", GUILayout.Width(26))) { giftActKind = 1; giftActLine = r.Line; giftActDir = -1; }
-                GUILayout.Label(Nice(r.Event), GUILayout.Width(125));
+                GUILayout.Label(Nice(r.Event), GUILayout.Width(105));
                 if (ui.Button(">", GUILayout.Width(26))) { giftActKind = 1; giftActLine = r.Line; giftActDir = 1; }
-                if (ui.Button("Delete", GUILayout.Width(60))) { giftActKind = 2; giftActLine = r.Line; }
+                if (ui.Button("Test", GUILayout.Width(44))) { giftActKind = 4; giftActKey = r.Key; }
+                if (ui.Button("Delete", GUILayout.Width(56))) { giftActKind = 2; giftActLine = r.Line; }
                 GUILayout.EndHorizontal();
             }
             GUILayout.Space(8);
@@ -257,8 +260,12 @@ namespace ChaosMode
             }
             if (!chaos.CreatorMode) Say("Gifts only work while Chat votes are on (Stream tab).", Bad);
             else if (!chaos.Bridge.Connected) Say("ChatBridge isn't running yet. Open it and connect TikTok through TikFinity.", Bad);
-            else Say("Ready. Gifts will trigger the rules below.", Good);
+            else if (chaos.Bridge.Version == "") Say("Your ChatBridge is out of date and can't send gifts. Download the newest ChatBridge zip from the releases page and extract it into the game folder (replace the files), then restart ChatBridge.", Bad);
+            else Say("Ready. ChatBridge " + chaos.Bridge.Version + " is connected. Gifts will trigger the rules below.", Good);
             Say("Gifts only do something while a workday is running.", Dim);
+            Say("Gifts received this session: " + chaos.GiftsReceived, Dim);
+            if (chaos.LastGift != "") Say("Last gift: " + chaos.LastGift, chaos.LastGiftFired ? Good : Bad);
+            Say("Press Test next to a rule to try it without waiting for a gift.", Dim);
             GUILayout.Space(6);
             DrawGiftEditor();
         }
@@ -318,7 +325,7 @@ namespace ChaosMode
 
         private void DrawWindow()
         {
-            var area = new Rect(440f, 40f, 380f, Screen.height - 60f);
+            var area = new Rect(440f, 40f, 400f, Screen.height - 60f);
             GUILayout.BeginArea(area);
             GUILayout.BeginVertical(GUI.skin.box);
             ui.BeginWindow(area);
