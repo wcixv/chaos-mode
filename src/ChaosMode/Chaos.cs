@@ -82,7 +82,12 @@ namespace ChaosMode
         // Called every frame by the trainer. allowed = host + private lobby.
         // Creator Mode (Twitch chat votes)
         public bool CreatorMode;
-        public bool GiftsOn;                      // TikTok gifts trigger events (works with or without chat votes)
+        public bool GiftsOn;                      // TikTok gifts trigger events (works with or without chat votes). Remembered between games.
+        public bool BridgeInstalled = true;       // set by the plugin: is the ChatBridge folder there?
+        public float GiftCooldown;                // seconds before the same gift can fire again (0 = no limit)
+        public float ViewerCooldown;              // seconds before the same viewer can fire another gift (0 = no limit)
+        private readonly Dictionary<string, float> lastGiftAt = new Dictionary<string, float>();
+        private readonly Dictionary<string, float> lastViewerAt = new Dictionary<string, float>();
         public bool ShowInGame = true;
         private float nextPublish;
         public float VoteSeconds = 25f;
@@ -164,14 +169,14 @@ namespace ChaosMode
             chat.AddRange(Bridge.Drain());
             var gifts = Bridge.DrainGifts();
             Gifts.Refresh(Time.unscaledTime);
-            Bridge.KeepAlive(CreatorMode || GiftsOn);
+            Bridge.KeepAlive(CreatorMode || (GiftsOn && allowed && BridgeInstalled));
             if (Bridge.Connected && Time.unscaledTime >= nextPublish)
             {
                 nextPublish = Time.unscaledTime + 0.2f;
                 try { Bridge.SendLine("#vote\t" + StateJson()); } catch (Exception e) { Loader.Log("Publish failed: " + e.Message); }
             }
 
-            if (!allowed) { Enabled = false; CreatorMode = false; GiftsOn = false; Vote.Active = false; nextAt = -1f; giftQueue.Clear(); return; }
+            if (!allowed) { Enabled = false; CreatorMode = false; Vote.Active = false; nextAt = -1f; giftQueue.Clear(); return; }
 
             // TikTok gifts fire their event (one every couple of seconds so a gift storm doesn't stack up)
             if (GiftsOn)
@@ -277,7 +282,21 @@ namespace ChaosMode
             LastGiftFired = false;
             if (ev == null) { LastGift = head + " - no rule for this gift. Add one in the list below."; return; }
             if (!DayRunning()) { LastGift = head + " - ignored: no workday is running"; Show("Gift from " + g.User + " arrived between days - no effect."); return; }
-            nextGiftAt = Time.unscaledTime + 2f;
+            // cooldowns (the menu's Test button skips them)
+            float now = Time.unscaledTime;
+            string gk = (g.Name ?? "").Trim().ToLowerInvariant(), vk = ((g.Platform ?? "") + ":" + (g.User ?? "")).ToLowerInvariant();
+            if (g.Platform != "test")
+            {
+                float at;
+                if (GiftCooldown > 0f && lastGiftAt.TryGetValue(gk, out at) && now - at < GiftCooldown)
+                { LastGift = head + " - ignored: " + g.Name + " is on cooldown (" + Mathf.CeilToInt(GiftCooldown - (now - at)) + "s left)"; return; }
+                if (ViewerCooldown > 0f && lastViewerAt.TryGetValue(vk, out at) && now - at < ViewerCooldown)
+                { LastGift = head + " - ignored: " + g.User + " is on cooldown (" + Mathf.CeilToInt(ViewerCooldown - (now - at)) + "s left)"; return; }
+                if (lastGiftAt.Count > 500) lastGiftAt.Clear();
+                if (lastViewerAt.Count > 2000) lastViewerAt.Clear();
+                lastGiftAt[gk] = now; lastViewerAt[vk] = now;
+            }
+            nextGiftAt = now + 2f;
             LastGift = head + " -> " + ev;
             LastGiftFired = true;
             GiftUser = g.User; GiftName = g.Name; GiftEvent = ev; GiftCount = g.Count < 1 ? 1 : g.Count; GiftSeq++;

@@ -126,19 +126,20 @@ namespace ChatBridge
             startBtn.Click += (s, e) => { if (running) StopCore(); else StartCore(); };
             Controls.Add(startBtn);
 
-            // OBS overlay row
+            // Overlay row: one copy button per place you can use it
             var obs = new Panel { BackColor = Theme.Panel, Location = new Point(20, 452), Size = new Size(480, 40) };
-            var obsLbl = new Label { Text = "OBS overlay", Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = Theme.Text, AutoSize = false, Size = new Size(96, 40), Location = new Point(10, 0), TextAlign = ContentAlignment.MiddleLeft };
-            var obsUrl = new Label { Text = OverlayUrl, ForeColor = Theme.Dim, AutoSize = false, Size = new Size(210, 40), Location = new Point(104, 0), TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Consolas", 9f) };
-            var copy = SmallButton("Copy", 318);
+            var obsLbl = new Label { Text = "Overlay", Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = Theme.Text, AutoSize = false, Size = new Size(64, 40), Location = new Point(10, 0), TextAlign = ContentAlignment.MiddleLeft };
+            var copy = SmallButton("Copy for OBS", 78, 120);
             copy.Click += (s, e) => { try { Clipboard.SetText(OverlayUrl); AddLog("Copied " + OverlayUrl + "  (OBS: Sources > + > Browser, size 480 x 420)"); } catch { } };
-            var prev = SmallButton("Preview", 396);
+            var copyTt = SmallButton("Copy for TikTok", 204, 126);
+            copyTt.Click += (s, e) => { try { Clipboard.SetText(TikTokOverlayUrl); AddLog("Copied " + TikTokOverlayUrl + "  (TikTok LIVE Studio: add a link source and paste it)"); } catch { } };
+            var prev = SmallButton("Preview", 336, 74);
             prev.Click += (s, e) =>
             {
                 if (!running) { AddLog("Press START first, then Preview shows a demo vote."); return; }
                 try { Process.Start(OverlayUrl + "?demo"); } catch (Exception ex) { AddLog("Couldn't open browser: " + ex.Message); }
             };
-            obs.Controls.AddRange(new Control[] { obsLbl, obsUrl, copy, prev });
+            obs.Controls.AddRange(new Control[] { obsLbl, copy, copyTt, prev });
             Controls.Add(obs);
 
             var logTitle = new Label { Text = "LIVE VOTES", Font = new Font("Segoe UI", 9f, FontStyle.Bold), ForeColor = Theme.Dim, AutoSize = true, Location = new Point(22, 506) };
@@ -160,10 +161,12 @@ namespace ChatBridge
         }
 
         const string OverlayUrl = "http://localhost:47801/overlay";
+        // TikTok LIVE Studio refuses "localhost", but localtest.me always points back to this PC.
+        const string TikTokOverlayUrl = "http://localtest.me:47801/overlay";
 
-        Button SmallButton(string text, int x)
+        Button SmallButton(string text, int x, int w = 74)
         {
-            var b = new Button { Text = text, ForeColor = Theme.Text, BackColor = Theme.Field, FlatStyle = FlatStyle.Flat, Location = new Point(x, 6), Size = new Size(74, 28), Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
+            var b = new Button { Text = text, ForeColor = Theme.Text, BackColor = Theme.Field, FlatStyle = FlatStyle.Flat, Location = new Point(x, 6), Size = new Size(w, 28), Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
             b.FlatAppearance.BorderSize = 0;
             return b;
         }

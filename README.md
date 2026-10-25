@@ -44,9 +44,9 @@ powershell -ExecutionPolicy Bypass -File .\setup.ps1 -GameDir "C:\...\steamapps\
 
 **2. Install Chaos Mode**
 
-1. Download **`ChaosMode-v1.2.2.zip`** and **`ChatBridge-v1.2.2.zip`** from [Releases](../../releases/latest).
+1. Download **`ChaosMode-v1.3.zip`** and **`ChatBridge-v1.3.zip`** from [Releases](../../releases/latest).
 2. In Steam: right-click the game → **Manage → Browse local files**.
-3. Put **`ChaosMode.dll`** (from `ChaosMode-v1.2.2.zip`) in the **`BepInEx\plugins`** folder. Extract **`ChatBridge-v1.2.2.zip`** into the game folder so you have `ChatBridge\ChatBridge.exe`. To start it later, go to the game folder, open the `ChatBridge` folder and run `ChatBridge.exe`. Creator Mode (chat votes) stays locked until ChatBridge is installed.
+3. Put **`ChaosMode.dll`** (from `ChaosMode-v1.3.zip`) in the **`BepInEx\plugins`** folder. Extract **`ChatBridge-v1.3.zip`** into the game folder so you have `ChatBridge\ChatBridge.exe`. To start it later, go to the game folder, open the `ChatBridge` folder and run `ChatBridge.exe`. Creator Mode (chat votes) stays locked until ChatBridge is installed.
 4. Launch the game, host a **Friends Only** or **Invite Only** lobby and press **F2**.
 
 **Coming from v1.0?** Delete `winhttp.dll`, `doorstop_config.ini`, the `ModLoader` folder and `Mods\ChaosMode.dll` from the game folder before step 1. The Setup tool leaves existing copies alone, and the old ones point at the v1.0 loader.
@@ -100,19 +100,20 @@ Doughnut = none
 - `>= 500 = EVENT` fires for any gift worth at least 500 diamonds. The biggest matching rule wins, and a gift's name rule beats it.
 - `= none` turns a gift off.
 - **`END DAY`** is a gift-only event that ends the workday right now. Any of the 24 regular events works too. The file lists them all.
+- **Cooldowns.** On the **TikTok Gifts** tab you can stop spam: *Same gift* means the same gift can't fire again for a while (off, 10 sec, 30 sec, 1 min or 5 min), and *Same viewer* does the same for one person. A gift on cooldown does nothing. The **Test** buttons ignore cooldowns.
 - A gift combo fires once, when it ends. Gifts that arrive between days do nothing, and a gift storm is spaced out to one event every two seconds.
 
 ### OBS overlay
 
-In ChatBridge, click **Copy** next to *OBS overlay*. In OBS, add a **Browser** source with that URL at **480 × 420**. Click **Preview** in ChatBridge to see a demo vote and a demo gift card while you position it. Turn off *Show vote box in game* in the F2 menu so viewers don't see the vote twice.
+In ChatBridge, click **Copy for OBS**. In OBS, add a **Browser** source with that URL at **480 × 420**. Click **Preview** in ChatBridge to see a demo vote and a demo gift card while you position it. Turn off *Show vote box in game* in the F2 menu so viewers don't see the vote twice.
 
 When a TikTok gift fires an event, the overlay pops up a card under the vote box showing who sent what and what it did. The cards also work with Chat votes off.
 
-**TikTok LIVE Studio:** it refuses `localhost` links. Use `http://localtest.me:47801/overlay` instead (a name that always points back to your own PC; it needs an internet connection to look it up). ChatBridge prints this link in its window when it starts. In LIVE Studio, add a web link source and paste it.
+**TikTok LIVE Studio:** it refuses `localhost` links. Click **Copy for TikTok** in ChatBridge instead. It copies `http://localtest.me:47801/overlay`, a name that always points back to your own PC (it needs an internet connection to look it up). In LIVE Studio, add a link source and paste it.
 
 ## Your settings are remembered
 
-Chaos Mode saves your timer, vote length, vote-box setting, Twitch channel and gift rules in `BepInEx\config\ChaosMode\` (`settings.txt` and `gifts.txt`). That folder is separate from the plugin and ChatBridge, so updating or reinstalling either one keeps everything. To back up your setup or move it to another PC, copy that folder.
+Chaos Mode saves your timer, vote length, vote-box setting, Twitch channel, whether TikTok gifts are on, your gift cooldowns and your gift rules in `BepInEx\config\ChaosMode\` (`settings.txt` and `gifts.txt`). That folder is separate from the plugin and ChatBridge, so updating or reinstalling either one keeps everything. To back up your setup or move it to another PC, copy that folder.
 
 ## Troubleshooting
 

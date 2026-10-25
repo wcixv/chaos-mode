@@ -38,6 +38,9 @@ namespace ChaosMode
                         else if (k == "voteseconds" && float.TryParse(v, out f) && f >= 5f) chaos.VoteSeconds = f;
                         else if (k == "showvoteboxingame" && bool.TryParse(v, out b)) chaos.ShowInGame = b;
                         else if (k == "twitchchannel") channel = v;
+                        else if (k == "giftson" && bool.TryParse(v, out b)) chaos.GiftsOn = b;
+                        else if (k == "giftcooldown" && float.TryParse(v, out f) && f >= 0f) chaos.GiftCooldown = f;
+                        else if (k == "viewercooldown" && float.TryParse(v, out f) && f >= 0f) chaos.ViewerCooldown = f;
                     }
                 }
             }
@@ -54,6 +57,9 @@ namespace ChaosMode
             sb.AppendLine("voteSeconds=" + chaos.VoteSeconds);
             sb.AppendLine("showVoteBoxInGame=" + (chaos.ShowInGame ? "true" : "false"));
             sb.AppendLine("twitchChannel=" + (channel ?? "").Trim());
+            sb.AppendLine("giftsOn=" + (chaos.GiftsOn ? "true" : "false"));
+            sb.AppendLine("giftCooldown=" + chaos.GiftCooldown);
+            sb.AppendLine("viewerCooldown=" + chaos.ViewerCooldown);
             return sb.ToString();
         }
 
